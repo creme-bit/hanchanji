@@ -24,6 +24,8 @@ const cache={};
 const role=()=>D.roles.find(r=>r.id===st.role);
 const roleName=id=>(D.roles.find(r=>r.id===id)||{}).name||'';
 function card(c){if(cache[c.id])return cache[c.id];for(const code of st.codes){const t=dec(c.e,code+'|'+c.id);if(t){cache[c.id]=JSON.parse(t);return cache[c.id]}}return null}
+const acache={};
+function asset(id){if(acache[id])return acache[id];const box=D.assets&&D.assets[id];if(!box)return null;for(const code of st.codes){const t=dec(box,code+'|'+id+'|a');if(t)return acache[id]=JSON.parse(t)}return null}
 function act3(){const r=role();for(const code of st.codes){const t=dec(r.a3,st.pw+'|'+code);if(t)return t}return null}
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),3200)}
 const modal=$('modal'),mbody=$('mbody');
@@ -39,7 +41,7 @@ function tryCode(code,quiet){code=String(code).trim();if(!code)return {msg:'请�
  S.set('codes',st.codes);return {n,a3,msg:(n?`解锁了 ${n} 张线索卡`:'')+(a3?(n?'，':'')+'第三幕已解封':'')}}
 
 /* ======================= 阶段 ======================= */
-const PH=[{n:'开场念白'},{n:'读本'},{n:'自我介绍'},{n:'第一轮 · 现场线索',pub:'r1'},{n:'第二轮 · 搜证一',ap:3,search:1},{n:'第二轮 · 讨论'},
+const PH=[{n:'开场'},{n:'读本'},{n:'自我介绍'},{n:'第一轮 · 现场线索',pub:'r1'},{n:'第二轮 · 搜证一',ap:3,search:1},{n:'第二轮 · 讨论'},
  {n:'第二轮 · 搜证二',ap:2,search:1},{n:'子时 · 开铁盒',pub:'box'},{n:'第三轮 · 破局',pub:'r3'},{n:'自清'},{n:'最后陈述'},{n:'投票',vote:1},{n:'复盘',reveal:1}];
 
 /* ======================= 同步：主持人 ======================= */
@@ -115,7 +117,7 @@ function send(o){if(P.conn&&P.on)P.conn.send(o);else toast('还没连上主持�
 function home(){app.innerHTML=`<div class="hero"><div><div class="title">寒蟬記</div><div class="seal">寒<br>蝉</div>
 <p class="sub">民国二十三年 · 腊月廿三 · 青浦沈公馆</p>
 <div class="wrap" style="max-width:420px;margin-top:28px">
-<button class="btn" data-go="opening">先看开场<small>主持人念之前，可以先读一遍</small></button>
+<button class="btn" data-go="opening">开场<small>故事从这里开始</small></button>
 <button class="btn red" data-go="pick">我是玩家</button>
 <button class="btn" data-go="hostlogin" style="text-align:center">我是主持人</button></div></div></div>`}
 function pick(){app.innerHTML=`<div class="top"><div class="who">选择你的角色<small>只选主持人发给你的那一个</small></div><button class="pill" data-go="home">返回</button></div>
@@ -136,17 +138,17 @@ function player(){const r=role();const tabs=[['book','本','本子'],['clue','�
  if(st.tab==='clue'){ [1,2,3].forEach(n=>{const got=D.cards.filter(c=>c.round===n&&!c.public&&card(c));const all=D.cards.filter(c=>c.round===n&&!c.public).length;
   body+=`<div class="grp">第${'一二三'[n-1]}轮<small>已得 ${got.length} / ${all}</small></div>`+(got.length?got.map(c=>{const x=card(c);return `<div class="row" data-card="${c.id}"><span class="id">${c.id}</span><span class="t">${esc(x.title)}${c.loc?`<small>${esc(c.loc)}</small>`:''}</span>›</div>`}).join(''):`<p class="fine">还没有</p>`)});
   body+=`<details style="margin-top:28px"><summary class="fine">手动输入口令（连不上主持人时用）</summary>${codeBox('cc')}</details>`}
- if(st.tab==='map'){const p5=D.cards.some(c=>c.id==='R2-07'&&card(c));body=`<div class="maps">${D.maps.filter(m=>m.id!=='P5'||p5).map(m=>`<button data-map="${m.id}"><img src="maps/${m.id}.jpg" alt="${esc(m.name)}" loading="lazy"><span>${esc(m.name)}</span></button>`).join('')}</div>${p5?'':'<p class="fine">露台鞋印图要等有人搜过露台。</p>'}`}
+ if(st.tab==='map'){body=`${V3.ok()?'<div class="grp">立体图<small>搜证时点亮的房间可以搜</small></div><div id="m3dph" class="m3d-ph">正在搭公馆……</div>':''}<div class="grp">平面图</div><div class="maps">${D.maps.map(m=>`<button data-map="${m.id}"><img src="maps/${m.id}.jpg" alt="${esc(m.name)}" loading="lazy"><span>${esc(m.name)}</span></button>`).join('')}</div>`}
  if(st.tab==='game')body=games();
  if(st.tab==='act')body=actView();
  app.innerHTML=`<div class="top"><div class="who">${esc(r.name)}<small>${esc(r.ident)}</small></div><button class="pill" data-go="logout">换人</button></div>${phaseBar()}<div class="wrap">${body}</div>
  <nav class="nav">${tabs.map(([k,i,t])=>`<button class="${st.tab===k?'on':''}" data-tab="${k}"><b>${i}</b>${t}</button>`).join('')}</nav>`;
- if(st.tab==='game')bindGames();if(st.tab==='act')bindAct()}
+ if(st.tab==='game')bindGames();if(st.tab==='act')bindAct();mount3d()}
 function codeBox(id){return `<div class="code"><input id="${id}" inputmode="numeric" autocomplete="off" placeholder="口令 / 卡号"><button class="pill" data-code="${id}">解锁</button></div><div class="msg" id="${id}m"></div>`}
 function actView(){const sv=st.sv;
  if(!P.on)return `<p>连上主持人以后，搜证和投票都在这里。</p><p class="fine">房间号</p><div class="code"><input id="rm2" inputmode="numeric" value="${esc(st.room||'')}" placeholder="四位房间号"><button class="pill" id="rmgo">连接</button></div>`;
  if(sv&&sv.search){const locs=[...new Set(D.cards.filter(c=>c.round===2&&!c.public&&c.loc!=='随身物品').map(c=>c.loc))];
-  return `<div class="grp">搜证<small>剩 ${sv.ap} 点</small></div><p class="fine">搜一个地点花 1 点，同一地点再搜会往深里翻。搜一个人花 2 点，每人整局只能被搜一次。</p>`+
+  return `<div class="grp">搜证<small>剩 ${sv.ap} 点</small></div><p class="fine">在图上点房间就能搜，也可以用下面的列表。搜一个地点花 1 点，同一地点再搜会往深里翻。搜一个人花 2 点，每人整局只能被搜一次。</p>${V3.ok()?'<div id="m3dph" class="m3d-ph">正在搭公馆……</div>':''}<div class="grp">地点</div>`+
   locs.map(l=>{const left=D.cards.filter(c=>c.loc===l&&!c.public&&!sv.taken.includes(c.id)).length;return `<div class="row loc"><span class="t">${esc(l)}<small>${left?'':'已经翻遍了'}</small></span><button class="pill" data-search="${esc(l)}" ${sv.ap<1?'disabled':''}>搜</button></div>`}).join('')+
   `<div class="grp">搜人</div>`+D.roles.filter(x=>x.id!==st.role).map(x=>`<div class="row loc"><span class="t">${esc(x.name)}<small>${sv.persons.includes(x.id)?'已被搜过':''}</small></span><button class="pill" data-person="${x.id}" ${sv.ap<2||sv.persons.includes(x.id)?'disabled':''}>搜身</button></div>`).join('')}
  if(sv&&sv.vote){const mv=sv.myVote||{};const sel=(k)=>`<select id="v${k}" style="max-width:none;width:100%"><option value="">请选择</option>${D.roles.map(x=>`<option value="${x.id}" ${mv[k]===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}<option value="none" ${mv[k]==='none'?'selected':''}>没有人 / 不知道</option></select>`;
@@ -160,9 +162,50 @@ function bindAct(){const g=$('rmgo');if(g)g.onclick=()=>{st.room=$('rm2').value.
  const v=$('vote');if(v)v.onclick=()=>send({t:'vote',a:$('va').value,b:$('vb').value,c:$('vc').value})}
 function showCard(id){const c=D.cards.find(x=>x.id===id),x=card(c);let extra='';
  if(x.sample)extra=`<p><b>药粉样本 ${x.sample.id}</b>（${esc(x.sample.from)}）可以在「机关 · 药粉比对」里尝。</p>`;
- if(x.map)extra+=`<p>露台鞋印图已经放进「地图」。</p>`;if(x.puzzle)extra+=`<p>碎纸可以在「机关 · 拼残信」里拼。</p>`;if(x.lock)extra+=`<p>铜锁可以在「机关 · 铁盒铜锁」里试。</p>`;
+ if(x.map){const a=asset(c.id);if(a)extra+=`<button class="imgbtn" data-zimg="${c.id}"><img src="${a.img}" alt="露台鞋印图"><span>点开放大</span></button>`}if(x.puzzle)extra+=`<p>碎纸可以在「机关 · 拼残信」里拼。</p>`;if(x.lock)extra+=`<p>铜锁可以在「机关 · 铁盒铜锁」里试。</p>`;
  open(c.id,`<div class="slip"><div class="meta">${c.id}${c.loc?' · '+esc(c.loc):''}</div><h3>${esc(x.title)}</h3>${x.html}${extra}</div>`)}
+function showImg(title,src){open(title,`<div style="display:flex;gap:8px;margin-bottom:8px"><button class="pill" data-z="1">适应</button><button class="pill" data-z="2">放大</button><button class="pill" data-z="3">再大</button></div><div class="zoom" id="zm"><img src="${src}" alt=""></div>`)}
 function showMap(id){const m=D.maps.find(x=>x.id===id);open(m.name,`<div style="display:flex;gap:8px;margin-bottom:8px"><button class="pill" data-z="1">适应</button><button class="pill" data-z="2">放大</button><button class="pill" data-z="3">再大</button></div><div class="zoom" id="zm"><img src="maps/${id}.jpg" alt="${esc(m.name)}"></div>`)}
+
+/* ======================= 立体图 ======================= */
+let LOCK=null;window.HCJ={lock:()=>LOCK,asset:id=>asset(id)};
+function locLeft(loc){const sv=st.sv;return D.cards.filter(c=>c.round===2&&!c.public&&c.loc===loc&&!(sv&&sv.taken.includes(c.id))).length}
+function locState(loc){const sv=st.sv;if(!P.on||!sv||!sv.search)return '';if(!locLeft(loc))return 'done';return sv.ap>=1?'can':''}
+function mount3d(){const ph=$('m3dph');if(!ph)return;
+ V3.ready().then(()=>{const p=$('m3dph');if(!p)return;const m=V3.map();m.state=locState;m.onPick=pickLoc;m.attach(p);m.refresh()}).catch(()=>{const p=$('m3dph');if(p)p.textContent='立体图没加载出来，可以看下面的平面图。'})}
+function sheet(html,cb){let el=$('sheet');if(!el){el=document.createElement('div');el.id='sheet';el.className='sheet';document.body.appendChild(el)}
+ el.innerHTML=html;requestAnimationFrame(()=>el.classList.add('on'));
+ el.querySelectorAll('[data-sheet]').forEach(b=>b.onclick=()=>{el.classList.remove('on');try{V3.map().clear()}catch(e){}cb&&cb(b.dataset.sheet)})}
+function pickLoc(loc,name){const sv=st.sv,left=locLeft(loc);let h=`<h3>${esc(name)}</h3>${name!==loc?`<p class="fine" style="margin-top:0">${esc(loc)}</p>`:''}`;
+ const can=P.on&&sv&&sv.search&&left&&sv.ap>=1;
+ if(!P.on)h+='<p class="fine">还没连上主持人。</p>';
+ else if(!sv||!sv.search)h+='<p class="fine">现在不是搜证时间。主持人开始搜证后，点这里就能搜。</p>';
+ else if(!left)h+='<p class="fine">这里已经被人翻遍了。</p>';
+ else if(sv.ap<1)h+='<p class="fine">你的行动点用完了。</p>';
+ else h+=`<p>搜这里花 1 点行动点，你还剩 ${sv.ap} 点。</p>`;
+ sheet(h+`<div class="row2"><button class="btn" data-sheet="x" style="text-align:center">${can?'算了':'知道了'}</button>${can?'<button class="btn red" data-sheet="go" style="text-align:center">搜这里</button>':''}</div>`,k=>{if(k==='go')send({t:'search',loc})})}
+
+/* ======================= 残信拼图 ======================= */
+let PZ=null,PZfit=null;const BW=1100,BH=1900,FX=100,FY=70;
+function pzState(A){let s=S.get('pz2',null);if(!s||s.length!==A.pieces.length){const R=()=>Math.random();
+ s=A.pieces.map(p=>{const m=Math.max(p.w,p.h)/2;return {x:m+R()*(BW-2*m),y:m+R()*(BH-2*m),r:[90,180,270,0,90,180][Math.floor(R()*6)],ok:0}});S.set('pz2',s)}return s}
+function pzDone(){const s=S.get('pz2',null);return !!(s&&s.length&&s.every(p=>p.ok))}
+function puzzleEl(){const A=asset('R1-08');if(!A)return null;if(PZ)return PZ;const s=pzState(A);
+ const el=document.createElement('div');el.className='pz';el.innerHTML=`<div class="frame" style="left:${FX/BW*100}%;top:${FY/BH*100}%;width:${A.W/BW*100}%;height:${A.H/BH*100}%"></div>`;
+ let k=1;const imgs=A.pieces.map((p,i)=>{const im=new Image();im.src=p.img;im.draggable=false;el.appendChild(im);im.style.zIndex=s[i].ok?0:++k;return im});
+ let sc=1;const pos=i=>{const p=A.pieces[i],q=s[i];const im=imgs[i];im.style.width=p.w*sc+'px';im.style.height=p.h*sc+'px';
+  im.style.transform=`translate(${(q.x-p.w/2)*sc}px,${(q.y-p.h/2)*sc}px) rotate(${q.r}deg)`;im.classList.toggle('ok',!!q.ok)};
+ PZfit=()=>{const w=el.getBoundingClientRect().width||340;sc=w/BW;el.style.height=(s.every(q=>q.ok)?FY*2+A.H:BH)*sc+'px';imgs.forEach((_,i)=>pos(i))};
+ new ResizeObserver(()=>PZfit()).observe(el);
+ imgs.forEach((im,i)=>{let d=null;
+  im.addEventListener('pointerdown',e=>{if(s[i].ok)return;e.preventDefault();im.setPointerCapture(e.pointerId);im.style.zIndex=++k;d={x:e.clientX,y:e.clientY,m:0}});
+  im.addEventListener('pointermove',e=>{if(!d)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;d.x=e.clientX;d.y=e.clientY;d.m+=Math.abs(dx)+Math.abs(dy);
+   const p=A.pieces[i];const m=Math.min(p.w,p.h)/2;s[i].x=Math.max(m,Math.min(BW-m,s[i].x+dx/sc));s[i].y=Math.max(m,Math.min(BH-m,s[i].y+dy/sc));pos(i)});
+  const up=()=>{if(!d)return;if(d.m<6)s[i].r=(s[i].r+90)%360;d=null;const p=A.pieces[i],tx=FX+p.x+p.w/2,ty=FY+p.y+p.h/2;
+   if(s[i].r===0&&Math.hypot(s[i].x-tx,s[i].y-ty)<45){s[i].x=tx;s[i].y=ty;s[i].ok=1;im.style.zIndex=0}
+   pos(i);S.set('pz2',s);if(s.every(q=>q.ok)){toast('拼好了');setTimeout(render,600)}};
+  im.addEventListener('pointerup',up);im.addEventListener('pointercancel',up)});
+ PZ=el;return el}
 
 /* ======================= 机关 ======================= */
 function owned(){return D.cards.filter(c=>card(c)).map(c=>({c,x:card(c)}))}
@@ -172,11 +215,12 @@ function games(){const o=owned();let h='';
  h+=`<div class="grp">铁盒铜锁<small>${box?'已打开':`还能试 ${Math.max(0,3-st.tries)} 次`}</small></div>`;
  if(box)h+=`<p class="done">铁盒已经开了。盒中物在「线索」第三轮。</p>`;
  else if(st.tries>=3)h+=`<p class="fine">锁卡死了。等子时，主持人会宣布撬开。</p>`;
+ else if(V3.ok())h+=`<p class="fine">四个转轮，每个〇到九。每次试都要当众报出来。</p><div id="lockph" class="lock3d-ph">正在取锁……</div><button class="btn red" id="trylock">开锁</button><div class="msg" id="lockm"></div>`;
  else h+=`<p class="fine">四个转轮，每个〇到九。锁面刻着「勿忘」。每次试都要当众报出来。</p><div class="wheel">${[0,1,2,3].map(i=>`<div><button data-w="${i}" data-d="1">▲</button><span id="w${i}">0</span><button data-w="${i}" data-d="-1">▼</button></div>`).join('')}</div><button class="btn red" id="trylock">开锁</button><div class="msg" id="lockm"></div>`;
  const pz=o.find(z=>z.x.puzzle);
  if(pz){const Pz=pz.x.puzzle;if(!st.puzzle||st.puzzle.length!==Pz.length){st.puzzle=Pz.map((_,i)=>i).sort(()=>Math.random()-.5);S.set('puzzle',st.puzzle)}
-  const ok=st.puzzle.every((v,i)=>v===i);
-  h+=`<div class="grp">拼残信<small>${ok?'已拼好':'点两片交换位置'}</small></div>`+(ok?`<div class="slip"><p>${esc(Pz.join(''))}</p><p class="meta">没有署名。笔迹秀气，像女人写的。</p></div>`:`<div class="tiles">${st.puzzle.map((v,i)=>`<button data-t="${i}">${esc(Pz[v])}</button>`).join('')}</div>`)}
+  const A=asset(pz.c.id),ok=A?pzDone():st.puzzle.every((v,i)=>v===i);
+  h+=`<div class="grp">拼残信<small>${ok?'已拼好':(A?'拖动碎片，轻点转向':'点两片交换位置')}</small></div>`+(A?`<p class="fine">纸篓里捡出来的八片碎纸，边上都烧焦了。拼对的地方会自动吸住。</p><div id="pzph"></div>`+(ok?`<div class="slip"><p>${esc(Pz.join(''))}</p><p class="meta">没有署名。笔迹秀气，像女人写的。</p></div>`:''):(ok?`<div class="slip"><p>${esc(Pz.join(''))}</p><p class="meta">没有署名。笔迹秀气，像女人写的。</p></div>`:`<div class="tiles">${st.puzzle.map((v,i)=>`<button data-t="${i}">${esc(Pz[v])}</button>`).join('')}</div>`))}
  if(o.some(z=>z.c.round===2)){const sm=o.filter(z=>z.x.sample);
   h+=`<div class="grp">药粉比对<small>手里有 ${sm.length} 份样本</small></div><div class="slip">${D.pub.bencao}</div>`+
   (sm.length?sm.map(z=>{const s=z.x.sample;return `<div class="row"><span class="id">样本${s.id}</span><span class="t">${esc(s.from)}<small>颜色：${esc(s.color)}${st.tasted[s.id]?' · 舌感：'+esc(s.taste):''}</small></span><button class="pill" data-taste="${s.id}">尝</button></div>`}).join(''):'<p class="fine">搜到带样本的卡以后，这里能尝。</p>')}
@@ -184,7 +228,10 @@ function games(){const o=owned();let h='';
  return h}
 function bindGames(){const wv=[0,0,0,0];
  app.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{const i=+b.dataset.w;wv[i]=(wv[i]+ +b.dataset.d+10)%10;$('w'+i).textContent=wv[i]});
- const tl=$('trylock');if(tl)tl.onclick=()=>{const c=wv.join('');const m=tryCode(c);if(m.n){$('lockm').textContent='咔哒一声，锁开了。';setTimeout(render,900)}else{st.tries++;S.set('tries',st.tries);$('lockm').textContent=`${c}，没开。`;setTimeout(render,900)}};
+ const lp=$('lockph');if(lp)V3.ready().then(()=>{const p=$('lockph');if(!p)return;LOCK=LOCK||V3.lock();LOCK.attach(p)}).catch(()=>{});
+ const tl=$('trylock');if(tl)tl.onclick=()=>{const c=$('lockph')||LOCK&&LOCK.el.isConnected?(LOCK?LOCK.value():'0000'):wv.join('');const m=tryCode(c);const cn=[...c].map(d=>'〇一二三四五六七八九'[+d]).join('');
+  if(m.n){$('lockm').textContent='咔哒一声，锁开了。';LOCK&&LOCK.open();tl.disabled=true;setTimeout(render,1800)}else{st.tries++;S.set('tries',st.tries);$('lockm').textContent=`${cn}，没开。还能试 ${Math.max(0,3-st.tries)} 次。`;LOCK&&LOCK.fail();if(st.tries>=3)setTimeout(render,1400)}};
+ const pp=$('pzph');if(pp){const el=puzzleEl();if(el){pp.replaceWith(el);PZfit&&PZfit()}}
  let sel=null;app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const i=+b.dataset.t;if(sel===null){sel=i;b.classList.add('sel')}else{const p=st.puzzle;[p[sel],p[i]]=[p[i],p[sel]];sel=null;S.set('puzzle',p);render()}});
  app.querySelectorAll('[data-taste]').forEach(b=>b.onclick=()=>{st.tasted[b.dataset.taste]=1;S.set('tasted',st.tasted);render()})}
 
@@ -235,6 +282,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button,[data-car
  if(d.tab){st.tab=d.tab;render();scrollTo(0,0);return}
  if(d.card){showCard(d.card);return}
  if(d.map){showMap(d.map);return}
+ if(d.zimg){const a=asset(d.zimg);if(a)showImg('露台鞋印图',a.img);return}
  if(d.z){document.querySelector('#zm img').style.setProperty('--z',d.z);return}
  if(d.code){const i=$(d.code);const m=tryCode(i.value);$(d.code+'m').textContent=m.msg;i.value='';if(m.n||m.a3)setTimeout(render,700)}});
 const hr=(location.hash.match(/^#r(\d{4})$/)||[])[1];if(hr&&!st.host){st.room=hr;S.set('room',hr)}
