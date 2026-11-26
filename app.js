@@ -59,7 +59,9 @@ const OPTS=window.PEER_OPTS||{};
 const H={peer:null,conns:new Map(),s:S.get('hs',null)};
 function hsInit(){if(H.s&&H.s.msgs&&H.s.gid)return;H.s=Object.assign({phase:0,applied:[],pub:[],ap:{},ledger:{},persons:{},votes:{},log:[],games:{},r1rel:[],solved:{}},H.s||{},{msgs:[],gid:Math.random().toString(36).slice(2,10)});hsSave()}
 function hsSave(){S.set('hs',H.s)}
-function hostStart(){hsInit();if(H.peer)return;
+let WL=null;function keepAwake(){try{if(navigator.wakeLock&&!WL)navigator.wakeLock.request('screen').then(l=>{WL=l;l.addEventListener('release',()=>{WL=null})}).catch(()=>{})}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&H.peer)keepAwake()});
+function hostStart(){hsInit();keepAwake();if(H.peer)return;
  if(!st.room){st.room=String(1000+Math.floor(Math.random()*9000));S.set('room',st.room)}
  if(typeof Peer==='undefined'){toast('同步组件没加载，口令模式仍可用');return}
  H.peer=new Peer('hanchanji-'+st.room,OPTS);
@@ -437,7 +439,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button,[data-car
  if(d.code){const i=$(d.code);const m=tryCode(i.value);$(d.code+'m').textContent=m.msg;i.value='';if(m.n||m.a3)setTimeout(render,700)}});
 window.HCJ={lock:()=>LOCK,asset:id=>asset(id),walk:()=>WALK,map:()=>MAP,st};
 const hr=(location.hash.match(/^#r(\d{4})$/)||[])[1];if(hr&&!st.host){st.room=hr;S.set('room',hr)}
-fetch('data.json').then(r=>r.json()).then(d=>{D=d;
+fetch('data.json?v=18').then(r=>r.json()).then(d=>{D=d;
  if(st.host){const t=dec(D.host,st.host);if(t)HD=JSON.parse(t);else{st.host=null}}
  if(st.role&&!st.host)joinRoom();render()}).catch(()=>{app.innerHTML='<div class="hero"><p>数据没加载出来，刷新试试。</p></div>'});
 render();
