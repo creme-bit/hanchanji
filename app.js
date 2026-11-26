@@ -82,7 +82,7 @@ const DEEP={'R2-10':'R2-09'};
 function hostMsg(c,d){const x=H.conns.get(c.peer);if(!x||!d||typeof d!=='object')return;
  if(d.t==='hello'&&D.roles.some(r=>r.id===d.role)){x.role=d.role;x.v=d.v||0;push(d.role);[...H.conns.values()].forEach(y=>{if(y!==x&&y.pos&&y.role!==x.role)try{c.send(y.pos)}catch(e){}});render();return}
  const who=x.role;if(!who)return;
- if(d.t==='pos'){const p={t:'pos',id:who,name:roleName(who),f:d.f===2?2:1,x:+d.x||0,z:+d.z||0,yaw:+d.yaw||0,loc:String(d.loc||'').slice(0,30)};x.pos=p;[...H.conns.values()].forEach(y=>{if(y!==x&&y.role&&y.role!==who)try{y.c.send(p)}catch(e){}});return}   // 在宅子里走动：转给其他人
+ if(d.t==='pos'){const p={t:'pos',id:who,name:roleName(who),f:d.f===2?2:1,x:+d.x||0,z:+d.z||0,g:+d.g||0,yaw:+d.yaw||0,loc:String(d.loc||'').slice(0,30)};x.pos=p;[...H.conns.values()].forEach(y=>{if(y!==x&&y.role&&y.role!==who)try{y.c.send(p)}catch(e){}});return}   // 在宅子里走动：转给其他人
  const s=H.s,ph=PH[s.phase];
  if(d.t==='search'){if(!ph.search)return tell(c,'现在不是搜证时间');
   if(d.person){const pid=HD.persons[roleName(d.person)];if((s.ap[who]??0)<2)return tell(c,'行动点不够（搜人要 2 点）');
@@ -444,7 +444,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button,[data-car
  if(d.code){const i=$(d.code);const m=tryCode(i.value);$(d.code+'m').textContent=m.msg;i.value='';if(m.n||m.a3)setTimeout(render,700)}});
 window.HCJ={lock:()=>LOCK,asset:id=>asset(id),walk:()=>WALK,map:()=>MAP,st};
 const hr=(location.hash.match(/^#r(\d{4})$/)||[])[1];if(hr&&!st.host){st.room=hr;S.set('room',hr)}
-fetch('data.json?v=22').then(r=>r.json()).then(d=>{D=d;
+fetch('data.json?v=23').then(r=>r.json()).then(d=>{D=d;
  if(st.host){const t=dec(D.host,st.host);if(t)HD=JSON.parse(t);else{st.host=null}}
  if(st.role&&!st.host)joinRoom();render()}).catch(()=>{app.innerHTML='<div class="hero"><p>数据没加载出来，刷新试试。</p></div>'});
 render();

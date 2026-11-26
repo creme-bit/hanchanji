@@ -132,7 +132,7 @@ const LOOK = {};
   LOOK.renderer = (r, exposure) => {
     r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     r.outputColorSpace = THREE.SRGBColorSpace;
-    r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = exposure || 1.0;
+    r.toneMapping = THREE.AgXToneMapping || THREE.ACESFilmicToneMapping; r.toneMappingExposure = exposure || 1.0;
     r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
   };
 
@@ -143,12 +143,12 @@ const LOOK = {};
   LOOK.env = renderer => {
     if (ENV) return ENV;
     const s = new THREE.Scene(), box = new THREE.BoxGeometry(1, 1, 1);
-    const room = new THREE.Mesh(box, new THREE.MeshBasicMaterial({ color: 0x2a2018, side: THREE.BackSide })); room.scale.set(16, 8, 16); room.position.y = 3; s.add(room);
+    const room = new THREE.Mesh(box, new THREE.MeshBasicMaterial({ color: 0x4a4c52, side: THREE.BackSide })); room.scale.set(16, 8, 16); room.position.y = 3; s.add(room);
     const panel = (c, i, x, y, z, sx, sy, sz) => { const m = new THREE.Mesh(box, new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(i) })); m.position.set(x, y, z); m.scale.set(sx, sy, sz); s.add(m); };
-    panel(0xffc47a, 9, 0, 6.8, 0, 3, 0.1, 3);        // 吊灯
-    panel(0xffb060, 4, -5, 2.2, -5, 1, 1, 1);        // 台灯
-    panel(0x8aa6ff, 3.2, 7.9, 3.2, 0, 0.1, 3.5, 5);  // 月光窗
-    panel(0x3a2a1e, 1, 0, -0.9, 0, 16, 0.1, 16);     // 地面反光
+    panel(0xffe8cc, 8, 0, 6.8, 0, 3, 0.1, 3);        // 吊灯
+    panel(0xffdcb0, 3, -5, 2.2, -5, 1, 1, 1);        // 台灯
+    panel(0xb8c8e8, 4, 7.9, 3.2, 0, 0.1, 3.5, 5);  // 月光窗
+    panel(0x5a5650, 1.2, 0, -0.9, 0, 16, 0.1, 16);     // 地面反光
     const pm = new THREE.PMREMGenerator(renderer);
     ENV = pm.fromScene(s, 0.04).texture; pm.dispose(); box.dispose();
     return ENV;
@@ -157,7 +157,7 @@ const LOOK = {};
   /* ---------------- 布光 ---------------- */
   // 暖色主光（吊灯、台灯）：带阴影的聚光灯，往下打；阴影只给关键的几盏，控制开销
   LOOK.keyLight = (parent, x, y, z, tx, ty, tz, opt) => {
-    const o = Object.assign({ color: 0xffc98a, intensity: 120, distance: 30, angle: 0.95, penumbra: 0.75, shadow: true, size: MOBILE ? 512 : 1024 }, opt || {});
+    const o = Object.assign({ color: 0xfff0e0, intensity: 120, distance: 30, angle: 0.95, penumbra: 0.75, shadow: true, size: MOBILE ? 512 : 1024 }, opt || {});
     const l = new THREE.SpotLight(o.color, o.intensity, o.distance, o.angle, o.penumbra, 1.6);
     l.position.set(x, y, z); l.target.position.set(tx, ty, tz);
     if (o.shadow) { l.castShadow = true; l.shadow.mapSize.set(o.size, o.size); l.shadow.bias = -0.0004; l.shadow.normalBias = 0.04; l.shadow.radius = 4; l.shadow.camera.near = 0.5; l.shadow.camera.far = o.distance; }

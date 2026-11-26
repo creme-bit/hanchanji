@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=22' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=23' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -1058,15 +1058,15 @@ const V3 = {};
       // ================= 楼梯：扶手栏杆、梯毯 =================
       for (let i = 0; i < 14; i++) { const z = 62 - i * 1.63 - 0.8, h = 0.45 * (i + 1);
         box(115, h, z, 6, 0.03, 1.5, cloth('#6b2a24'));
-        [108.8, 121.2].forEach(x => mk(s, lathe([[0.1, 0], [0.16, 0.2], [0.08, 0.6], [0.14, 1.4], [0.08, 2.3], [0.1, 2.8]], WD('#3a1a0c'), 8), x, h, z)); }
+        [108.8, 121.2].forEach(x => { const o = mk(s, lathe([[0.1, 0], [0.16, 0.2], [0.08, 0.6], [0.14, 1.4], [0.08, 2.3], [0.1, 2.8]], WD('#3a1a0c'), 8), x, h, z); o.userData.fixed = o.userData.nocol = 1; }); }
       [108.8, 121.2].forEach(x => { const r = mk(s, new THREE.BoxGeometry(0.3, 0.22, 23.5), WD('#2a1208'), x, 6.65 + 3.15, 51.0); r.rotation.x = Math.atan2(0.45, 1.63); });
-      [108.8, 121.2].forEach(x => { const g = G(x, 0, 62.6); mk(g, new THREE.BoxGeometry(0.6, 3.6, 0.6), WD('#2a1208'), 0, 1.8, 0); mk(g, new THREE.SphereGeometry(0.4, 14, 10), IM.brass, 0, 3.9, 0); });
+      [108.8, 121.2].forEach(x => { const g = G(x, 0, 62.6); g.userData.fixed = g.userData.nocol = 1; mk(g, new THREE.BoxGeometry(0.6, 3.6, 0.6), WD('#2a1208'), 0, 1.8, 0); mk(g, new THREE.SphereGeometry(0.4, 14, 10), IM.brass, 0, 3.9, 0); });
       frame(106.5, 7.0, 54, Math.PI / 2, 2.2, 1.6, 'land'); frame(123.5, 9.5, 46, -Math.PI / 2, 1.4, 1.8, 'photo');
       // ================= 下人房 =================
             model(s, 'chinese_tea_table', 115, 0, 69.0, 0, 3.4); oilLamp(115, 2.25, 69.0, true); mug(114.4, 2.25, 69.5); thermos(115.7, 2.25, 69.6, 0x2a5a3a);
       washstand(107.4, 0, 86.8, 0.3);
-      pegRail(115, 6.2, 64.4, 0, 8, [[-3, '#3a4a6a', 3.4], [-1.6, '#5a5a5a', 3.0], [1.2, '#2a2a3a', 3.6], [2.8, '#6a5a4a', 2.8]]);
-      hat(118.8, 6.6, 64.8, null, true); shoes(110.8, 80.0, 0.1, '#1a1a1a'); shoes(120.6, 80.2, -0.2, '#2a2420');
+      pegRail(111.6, 6.2, 64.4, 0, 8, [[-3, '#3a4a6a', 3.4], [-1.6, '#5a5a5a', 3.0], [1.2, '#2a2a3a', 3.6], [2.8, '#6a5a4a', 2.8]]);
+      hat(115.2, 6.6, 64.8, null, true); shoes(110.8, 80.0, 0.1, '#1a1a1a'); shoes(120.6, 80.2, -0.2, '#2a2420');
       model(s, 'chinese_stool', 117.5, 0, 82, 0.3, 2.6); model(s, 'wooden_bucket_01', 122.6, 0, 87.6, 0, 2.6);
       frame(123.6, 6.0, 80, -Math.PI / 2, 1.2, 1.8, 'poster');
       // ================= 厨房 =================
@@ -1587,7 +1587,7 @@ const V3 = {};
         rest: [['upper_armL', { d: [0.05, -1, -0.15] }], ['forearmL', { d: [0.15, -1, -0.1] }], ['upper_armR', { d: [-0.1, -1, 0.35] }], ['forearmR', { d: [0.6, 0.2, -0.6] }], ['spine005', [0, 12, -5]]],
       };
       (POSES[o.pose || 'stand'] || []).forEach(([k, v]) => D(k, v)); m.updateMatrixWorld(true);
-      const skin = new THREE.MeshStandardMaterial({ color: o.skin || 0xb08a6e, roughness: 0.65 }); skin.userData.look = 'skin'; mesh.material = skin; mesh.castShadow = !o.dyn;
+      const skin = new THREE.MeshStandardMaterial({ color: o.skin || 0xd2a98a, roughness: 0.62, envMapIntensity: 0.4 }); skin.userData.look = 'skin'; mesh.material = skin; mesh.castShadow = !o.dyn;
       const geo = mesh.geometry, pos = geo.attributes.position, nor = geo.attributes.normal, si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight, idx = geo.index.array;
       const names = mesh.skeleton.bones.map(b => b.name);
       const part = n => /^(spine005|spine004)/.test(n) ? 'head' : /^(hand|f_|thumb|palm)/.test(n) ? 'hand' : /^(foot|toe|heel)/.test(n) ? 'foot' : /^(thigh|shin)/.test(n) ? 'leg' : /^(upper_arm|forearm)/.test(n) ? 'arm' : 'torso';
@@ -1597,29 +1597,45 @@ const V3 = {};
       const shell = (parts, off, color, rough = 0.85) => { const g2 = geo.clone(), p2 = g2.attributes.position;
         for (let i = 0; i < pos.count; i++) p2.setXYZ(i, pos.getX(i) + nor.getX(i) * off, pos.getY(i) + nor.getY(i) * off, pos.getZ(i) + nor.getZ(i) * off);
         const ni = []; for (let t = 0; t < idx.length; t += 3) { const c = parts.includes(VP[idx[t]]) + parts.includes(VP[idx[t + 1]]) + parts.includes(VP[idx[t + 2]]); if (c >= (parts.length === 1 && parts[0] === 'foot' ? 3 : 1)) ni.push(idx[t], idx[t + 1], idx[t + 2]); }
-        g2.setIndex(ni); const sm = new THREE.SkinnedMesh(g2, new THREE.MeshStandardMaterial({ color, roughness: rough })); sm.bind(mesh.skeleton, mesh.bindMatrix); sm.castShadow = true; sm.frustumCulled = false; mesh.parent.add(sm); return sm; };
+        g2.setIndex(ni); const cm = new THREE.MeshPhysicalMaterial({ color, roughness: Math.max(0.8, rough), metalness: 0, sheen: 0.7, sheenRoughness: 0.75, sheenColor: new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.35), envMapIntensity: 0.3 }); cm.userData.look = 'cloth';
+        if (rough < 0.6) { cm.roughness = 0.55; cm.sheen = 0; }   // 鞋子留一点光
+        const sm = new THREE.SkinnedMesh(g2, cm); sm.bind(mesh.skeleton, mesh.bindMatrix); sm.castShadow = true; sm.frustumCulled = false; mesh.parent.add(sm); return sm; };
       const top = o.top || '#3a3a40', bottom = o.bottom || top;
       shell(['torso', 'arm'], 0.016, top); shell(['leg'], 0.014, bottom); shell(['foot'], 0.012, '#151210', 0.5);
       if (o.vest) shell(['torso'], 0.03, o.vest, 0.7);
       if (o.apron) shell(['torso'], 0.026, o.apron, 0.9);
       const pel = bones['spine'];
       if (o.gown && pel) {   // 长衫下摆：从腰垂到脚踝
-        const sk2 = new THREE.Mesh(new THREE.LatheGeometry([[0.17, 0.08], [0.2, -0.2], [0.24, -0.6], [0.27, -0.9]].map(([a, b]) => new THREE.Vector2(a, b)), 20), new THREE.MeshStandardMaterial({ color: top, roughness: 0.85, side: THREE.DoubleSide }));
+        const gm = new THREE.MeshPhysicalMaterial({ color: top, roughness: 0.85, sheen: 0.7, sheenRoughness: 0.75, sheenColor: new THREE.Color(top).lerp(new THREE.Color(0xffffff), 0.35), side: THREE.DoubleSide, envMapIntensity: 0.3 }); gm.userData.look = 'cloth';
+        const sk2 = new THREE.Mesh(new THREE.LatheGeometry(o.bun ? [[0.16, 0.08], [0.17, -0.2], [0.18, -0.6], [0.17, -0.92]].map(([a, b]) => new THREE.Vector2(a, b)) : [[0.17, 0.08], [0.2, -0.2], [0.24, -0.6], [0.27, -0.9]].map(([a, b]) => new THREE.Vector2(a, b)), 20), gm);
         sk2.scale.set(1, 1, 0.75); sk2.castShadow = true; pel.add(sk2); }
       const head = bones['spine005'];
-      if (head) { const hm = new THREE.MeshStandardMaterial({ color: 0x15110e, roughness: 0.55 });
-        const hair = new THREE.Mesh(new THREE.SphereGeometry(0.104, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.4), o.bald ? skin : hm); hair.position.set(0, 0.14, -0.03); hair.rotation.x = -0.35; hair.scale.set(1, 0.85, 1.08); head.add(hair);
-        if (o.hat === 'gua') { const h = new THREE.Mesh(new THREE.SphereGeometry(0.112, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.45), new THREE.MeshStandardMaterial({ color: 0x0e0d0c, roughness: 0.4 })); h.position.set(0, 0.16, -0.015); head.add(h);
-          const kn = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), new THREE.MeshStandardMaterial({ color: 0xa01810 })); kn.position.set(0, 0.27, -0.015); head.add(kn); }
-        if (o.hat === 'straw') { const h = new THREE.Group(); h.position.set(0, 0.23, -0.01); head.add(h); const sm = new THREE.MeshStandardMaterial({ color: 0xc8a868, roughness: 0.9 });
+      if (head) { const hm = new THREE.MeshStandardMaterial({ color: 0x17120f, roughness: 0.42, envMapIntensity: 0.5 }); hm.userData.look = 'hair';
+        const H = (geo, m, x, y, z, rx = 0, sx = 1, sy = 1, sz = 1) => { const o2 = new THREE.Mesh(geo, m); o2.position.set(x, y, z); o2.rotation.x = rx; o2.scale.set(sx, sy, sz); head.add(o2); return o2; };
+        if (!o.bald) {   // 头发：盖住头顶和后脑，额头露出来
+          H(new THREE.SphereGeometry(0.118, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.56), hm, 0, 0.128, -0.012, -0.42, 1.04, 1.0, 1.1);
+          if (o.bun) { H(new THREE.SphereGeometry(0.118, 20, 12, Math.PI, Math.PI, 0, Math.PI * 0.8), hm, 0, 0.124, -0.012, 0, 1.06, 1.04, 1.1);   // 后脑头发垂到颈
+            H(new THREE.SphereGeometry(0.055, 14, 10), hm, 0, 0.04, -0.118, 0, 1.25, 0.9, 0.9); }   // 低发髻
+        }
+        if (o.hat === 'gua') { const hmat = new THREE.MeshStandardMaterial({ color: 0x0e0d0c, roughness: 0.4 });
+          H(new THREE.SphereGeometry(0.124, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.45), hmat, 0, 0.15, -0.01, -0.12);
+          H(new THREE.SphereGeometry(0.016, 8, 6), new THREE.MeshStandardMaterial({ color: 0xa01810 }), 0, 0.272, 0.0); }
+        if (o.hat === 'straw') { const h = new THREE.Group(); h.position.set(0, 0.235, -0.01); head.add(h); const sm = new THREE.MeshStandardMaterial({ color: 0xc8a868, roughness: 0.9 });
           h.add(new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.01, 20), sm)); const c = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.08, 16), sm); c.position.y = 0.04; h.add(c); }
-        { const fm = new THREE.MeshStandardMaterial({ color: 0x1a1410, roughness: 0.6 });   // 五官：眼、眉、嘴
-          [-0.033, 0.033].forEach(xx => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 6), fm); e.position.set(xx, 0.075, 0.092); e.scale.set(1.3, 0.8, 0.6); head.add(e);
-            const br = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.006, 0.01), fm); br.position.set(xx, 0.096, 0.094); br.rotation.z = xx > 0 ? -0.15 : 0.15; head.add(br); });
-          const mo = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.005, 0.01), new THREE.MeshStandardMaterial({ color: 0x5a3028 })); mo.position.set(0, 0.022, 0.096); head.add(mo);
-          if (o.mustache) { const mu = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.008, 0.012), new THREE.MeshStandardMaterial({ color: 0x8a8478 })); mu.position.set(0, 0.034, 0.099); head.add(mu); } }
-        if (o.bun) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 8), hm); b.position.set(0, 0.12, -0.1); head.add(b); }
-        if (o.glasses) { const gm = new THREE.MeshStandardMaterial({ color: 0x8a7a50, metalness: 0.8, roughness: 0.3 }); [-0.035, 0.035].forEach(xx => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.003, 6, 16), gm); r.position.set(xx, 0.06, 0.1); head.add(r); }); }
+        { // 五官：眼白 + 瞳仁、眉、鼻、唇
+          const white = new THREE.MeshStandardMaterial({ color: 0xece6dc, roughness: 0.35 }), iris = new THREE.MeshStandardMaterial({ color: 0x1a120c, roughness: 0.2 }), brow = new THREE.MeshStandardMaterial({ color: 0x1c1612, roughness: 0.7 });
+          const lip = new THREE.MeshStandardMaterial({ color: o.bun ? 0x9a3a36 : 0x8a5a4c, roughness: 0.5 }); const sk = mesh.material;
+          [-1, 1].forEach(e => { const xx = e * 0.036;
+            H(new THREE.SphereGeometry(0.014, 12, 8), white, xx, 0.118, 0.088, 0, 1.25, 0.72, 0.5);
+            H(new THREE.SphereGeometry(0.0078, 10, 8), iris, xx, 0.118, 0.0945, 0, 1, 1, 0.5);
+            const b2 = H(new THREE.BoxGeometry(0.034, 0.0055, 0.01), brow, xx, 0.142, 0.093); b2.rotation.z = e * (o.bun ? -0.12 : -0.06); });
+          H(new THREE.ConeGeometry(0.013, 0.04, 8), sk, 0, 0.094, 0.1, -1.15, 1, 1, 0.8);                    // 鼻
+          H(new THREE.SphereGeometry(0.017, 12, 8), lip, 0, 0.062, 0.091, 0, 1.25, 0.38, 0.5);            // 唇
+          if (o.mustache) H(new THREE.BoxGeometry(0.046, 0.008, 0.012), new THREE.MeshStandardMaterial({ color: 0x5a5448 }), 0, 0.075, 0.097); }
+        if (o.glasses) { const gm2 = new THREE.MeshStandardMaterial({ color: 0x8a7a50, metalness: 0.8, roughness: 0.3 }); [-0.036, 0.036].forEach(xx => H(new THREE.TorusGeometry(0.02, 0.0028, 6, 18), gm2, xx, 0.118, 0.103));
+          H(new THREE.BoxGeometry(0.03, 0.003, 0.003), gm2, 0, 0.12, 0.104); }
+        if (o.gown || o.vest) { const cm2 = new THREE.MeshStandardMaterial({ color: o.top || '#333', roughness: 0.9 }); cm2.userData.look = 'cloth';   // 立领
+          const col = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.074, 0.045, 18, 1, true), cm2); col.material.side = THREE.DoubleSide; col.position.set(0, -0.012, 0.004); head.add(col); }
       }
       if (o.pose === 'lantern' && bones['handR']) { m.updateMatrixWorld(true); const hp = new THREE.Vector3(); bones['handR'].getWorldPosition(hp); const lt = new THREE.Group(); lt.position.copy(hp); lt.position.y -= 0.02; m.add(lt);
         const pm = new THREE.MeshStandardMaterial({ color: 0xf0d8a8, emissive: 0xffa040, emissiveIntensity: 1.2, roughness: 0.8 });
@@ -1676,10 +1692,52 @@ const V3 = {};
         else { const pen = c.z > wc.z ? w.max.z - b.min.z : b.max.z - w.min.z; const ov = Math.min(b.max.x, w.max.x) - Math.max(b.min.x, w.min.x); if (pen > 0.02 && pen < 2.5 && ov > 0.3) { const d = (c.z > wc.z ? 1 : -1) * (pen + 0.03); if (Math.abs(d) > Math.abs(mz)) mz = d; } } });
       if (!mx && !mz) return; o.position.x += mx; o.position.z += mz; o.updateMatrixWorld(true); } });
   }
+  /* 门口让路：家具挡在门里外 4.5 以内的通道上，就往旁边或屋里挪一点（线索点跟着挪） */
+  function clearDoors(s, f) {
+    const y0 = f === 2 ? F2 : 0, rooms = new Set((HOT[f] || []).map(h => h.loc)), bb = new THREE.Box3(), sz = new THREE.Vector3();
+    s.updateMatrixWorld(true);
+    const walls = []; s.traverse(o => { if (o.isMesh && o.userData.wall) walls.push(new THREE.Box3().setFromObject(o)); });
+    const items = [];
+    const pick = list => list.forEach(o => {
+      if (o.isLight || o.isPoints || o.userData.noscale || o.userData.struct || o.userData.wall || o.userData.fixed) return;
+      if ((o.isGroup || o.type === 'Object3D') && o.children.length > 1 && Math.abs(o.position.x) < 1e-6 && Math.abs(o.position.z) < 1e-6) { pick(o.children); return; }
+      bb.setFromObject(o); if (bb.isEmpty()) return; bb.getSize(sz);
+      if (Math.max(sz.x, sz.z) > 14 || sz.y < 0.7 || bb.max.y < y0 + 0.5 || bb.min.y > y0 + 4.6) return;
+      if (o.isMesh && o.geometry && o.geometry.type === 'BoxGeometry' && bb.min.y < y0 + 0.3 && bb.max.y <= y0 + 1.5) return;   // 能踩上去的台阶
+      items.push(o); });
+    pick(s.children);
+    const PRm = 0.85, moved = [];
+    DOORS.forEach(d => {
+      if (!rooms.has(d[0]) || !rooms.has(d[2])) return;
+      const a = d[4], c = d[5]; let ux = c[0] - a[0], uz = c[2] - a[2]; const L = Math.hypot(ux, uz); if (L < 0.5 || L > 3) return; ux /= L; uz /= L;
+      const cx = (a[0] + c[0]) / 2 * K, cz = (a[2] + c[2]) / 2 * K, lx = -uz, lz = ux, HW = 2.0 * K + PRm, AL = 4.5 * K + PRm;
+      items.forEach(o => {
+        bb.setFromObject(o); const cs = [[bb.min.x, bb.min.z], [bb.max.x, bb.min.z], [bb.min.x, bb.max.z], [bb.max.x, bb.max.z]];
+        const pr = (vx, vz) => { let a0 = 1e9, a1 = -1e9, l0 = 1e9, l1 = -1e9; cs.forEach(([x, z]) => { const dx = x - cx, dz = z - cz, al = dx * vx + dz * vz, lt = dx * lx + dz * lz; if (al < a0) a0 = al; if (al > a1) a1 = al; if (lt < l0) l0 = lt; if (lt > l1) l1 = lt; }); return [a0, a1, l0, l1]; };
+        const [a0, a1, l0, l1] = pr(ux, uz);
+        if (a1 < -AL || a0 > AL || l1 < -HW || l0 > HW) return;           // 不在通道上
+        const hang = bb.min.y > y0 + 1.5;
+        const opts = [[HW - l0 + 0.05, lx, lz], [-(l1 + HW) - 0.05, lx, lz]];   // 往两边让
+        if (!hang) { if (a0 > 0) opts.push([AL - a0 + 0.05, ux, uz]); else if (a1 < 0) opts.push([-(a1 + AL) - 0.05, ux, uz]); }   // 往屋里退
+        opts.sort((p, q) => Math.abs(p[0]) - Math.abs(q[0]));
+        for (const [m, vx, vz] of opts) {
+          if (Math.abs(m) > 4.2) continue;
+          const nb = bb.clone().translate(new THREE.Vector3(vx * m, 0, vz * m)); nb.expandByScalar(-0.05);
+          if (walls.some(w => w.intersectsBox(nb))) continue;
+          o.position.x += vx * m; o.position.z += vz * m; o.updateMatrixWorld(true);
+          moved.push([bb.clone(), vx * m, vz * m]); break;
+        }
+      });
+    });
+    // 线索点跟着家具挪
+    Object.keys(SP).forEach(l => { if (!rooms.has(l)) return; SP[l].forEach(sp => { const x = sp.at[0] * K, z = sp.at[2] * K; const m = moved.find(([b]) => x >= b.min.x - 0.3 && x <= b.max.x + 0.3 && z >= b.min.z - 0.3 && z <= b.max.z + 0.3 && sp.at[1] >= b.min.y - 0.5 && sp.at[1] <= b.max.y + 0.8);
+      if (m) { sp.at = [sp.at[0] + m[1] / K, sp.at[1], sp.at[2] + m[2] / K]; } }); });
+    return moved.length;
+  }
   async function buildInterior(f, renderer) {
     await realTex();
     const s = new THREE.Scene();
-    LOOK.fog(s, 0x0b0d14, 0.0085);
+    LOOK.fog(s, 0x15171c, 0.0055);
     interior(() => { if (f === 1) SCENE.buildGround(s); else SCENE.buildUpper(s); oldShop(s); }, f);
     if (renderer) s.environment = LOOK.env(renderer);
     const y0 = f === 2 ? F2 : 0;
@@ -1688,14 +1746,14 @@ const V3 = {};
     if (f === 2) M.box(s, 152, 0.3, 4, 75, y0 + IH + 0.2, 92, '#2a2420');
     { const oc = M.carpet; if (CARPET) M.carpet = CARPET; try { decorate(s, f); roomsDeco(s, f); } finally { M.carpet = oc; } } ceilings(s, f); outdoor(s, f); woodUV(s);
     // 布光：环境光压低，暖色吊灯为主、冷色月光为辅；关键几处用带阴影的聚光
-    s.add(new THREE.HemisphereLight(0x6a7cb0, 0x2a2018, 0.5));
+    s.add(new THREE.HemisphereLight(0xc4ccdc, 0x5c5650, 1.0)); s.add(new THREE.AmbientLight(0xd0d4dc, 0.22));   // 暗处提亮、偏中性
     LOOK.moon(s, 75, 60, 150);
     if (f === 1) { LOOK.keyLight(s, 57, IH - 0.8, 61, 57, 0, 61, { intensity: 230, distance: 26, angle: 1.0 }); LOOK.keyLight(s, 94, IH - 0.8, 51, 94, 0, 51, { intensity: 140, distance: 18, angle: 0.95 }); }
-    else { LOOK.keyLight(s, 71.8, y0 + 3.55, 75.9, 74.5, y0 + 2.6, 78, { intensity: 70, distance: 11, angle: 1.15, color: 0xffd9a0 }); LOOK.keyLight(s, 25, y0 + IH - 0.8, 75, 25, y0, 75, { intensity: 80, distance: 20, angle: 1.0 }); }
+    else { LOOK.keyLight(s, 71.8, y0 + 3.55, 75.9, 74.5, y0 + 2.6, 78, { intensity: 70, distance: 11, angle: 1.15, color: 0xffe8c8 }); LOOK.keyLight(s, 25, y0 + IH - 0.8, 75, 25, y0, 75, { intensity: 80, distance: 20, angle: 1.0 }); }
     { const du = LOOK.dust(); s.add(du); s.userData.dust = du; }
     (f === 1 ? ROOMS1 : ROOMS2).forEach(([x, z]) => {
       const k = DIM[x + ',' + z] ?? 1;
-      const l = new THREE.PointLight(0xffc890, 58 * k, 30, 1.7); l.position.set(x, y0 + IH - 4.2, z); s.add(l);
+      const l = new THREE.PointLight(0xffecd8, 62 * k, 32, 1.6); l.position.set(x, y0 + IH - 4.2, z); s.add(l);
     });
     if (f === 2) { const l = new THREE.PointLight(0xffd090, 22, 12, 1.5); l.position.set(71.8, F2 + 4.3, 75.9); s.add(l); }
     if (f === 1) {
@@ -1708,8 +1766,9 @@ const V3 = {};
       const lt2 = new THREE.PointLight(0xffa850, 40, 22, 1.6); lt2.position.set(17, 7, 21); s.add(lt2);
     }
     compress(s);
+    s.userData.cleared = clearDoors(s, f);
     LOOK.upgrade(s);
-    s.traverse(o => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.envMapIntensity !== undefined && m !== IM.brass) m.envMapIntensity = 0.55; }); });
+    s.traverse(o => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.envMapIntensity !== undefined && m !== IM.brass) m.envMapIntensity = 0.85; }); });
     return s;
   }
   // 机位：look = 初始朝向点
@@ -1875,9 +1934,8 @@ const V3 = {};
     el.innerHTML = '<div class="walk-c"></div><div class="walk-l"></div><div class="walk-top"><button class="pill" data-w="back">全图</button><div class="walk-t"><b></b><small></small></div><div class="walk-i"></div></div><div class="walk-tip">' + (matchMedia('(pointer: coarse)').matches ? '左下摇杆走动 · 拖动环视 · 点地面走过去' : 'WASD / 方向键走动 · 拖动环视 · 点地面走过去') + '</div><div class="walk-wait">正在点灯……</div><canvas class="walk-mini" width="240" height="170"></canvas><div class="walk-l walk-pl"></div><div class="walk-joy"><i></i></div>';
     const cbox = el.querySelector('.walk-c'), lbox = el.querySelector('.walk-l'), wait = el.querySelector('.walk-wait');
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    LOOK.renderer(renderer, 1.08); renderer.shadowMap.autoUpdate = false;   // 场景是静的：阴影只在场景变了以后重算一次
+    LOOK.renderer(renderer, 1.2); renderer.shadowMap.autoUpdate = false;   // 场景是静的：阴影只在场景变了以后重算一次
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
     cbox.appendChild(renderer.domElement);
     const cam = new THREE.PerspectiveCamera(70, 1, 0.3, 1000);
     const scenes = {}; let cur = null, loc = null, vps = [], vi = 0, yaw = 0, pitch = -0.12, need = true, W = 1, H = 1, tw = null;
@@ -1932,20 +1990,34 @@ const V3 = {};
     function buildCol(s, f) {      // 碰撞盒（世界坐标 x/z）：墙 + 落地的家具；地毯、吊灯、细杆不挡
       const y0 = f === 2 ? F2 : 0, out = [], bb = new THREE.Box3(), sz = new THREE.Vector3();
       s.updateMatrixWorld(true);
-      const add = b => { if (b.isEmpty() || b.max.y < y0 + 0.5 || b.min.y > y0 + 4.6) return; out.push([b.min.x, b.min.z, b.max.x, b.max.z]); };
-      s.traverse(o => { if (o.isMesh && o.userData.wall) { bb.setFromObject(o); add(bb); } });
+      const add = (b, src) => { if (b.isEmpty() || b.max.y < y0 + 0.5 || b.min.y > y0 + 4.6) return; const r = [b.min.x, b.min.z, b.max.x, b.max.z]; r.src = src; r.h = [b.min.y, b.max.y];
+        r.step = !!(src && src.isMesh && !src.userData.wall && src.geometry && src.geometry.type === 'BoxGeometry' && b.min.y < y0 + 0.3); out.push(r); };   // 台阶、矮台：能踩上去
+      s.traverse(o => { if (o.isMesh && o.userData.wall) { bb.setFromObject(o); add(bb, o); } });
+      // 收紧时被包成“结构件”的大方块（楼梯踏步、扶手墙）也要算：踏步能踩，扶手挡人
+      s.traverse(o => { if (!o.isMesh || o.userData.wall || !o.geometry || o.geometry.type !== 'BoxGeometry') return; let q = o.parent, wrapped = false; while (q) { if (q.userData && q.userData.wrap) { wrapped = true; break; } q = q.parent; } if (!wrapped) return;
+        const gp = o.geometry.parameters || {}; if (Math.min(gp.width || 0, gp.depth || 0) < 0.8) return;   // 门扇、薄板不算
+        bb.setFromObject(o); if (bb.min.y < y0 + 0.3 && bb.max.y > y0 + 0.3 && bb.max.y < y0 + 8) add(bb, o); });
       const pick = list => list.forEach(o => {
-        if (o.isLight || o.isPoints || o.userData.noscale || o.userData.struct || o.userData.wall || o.userData.avatar) return;
+        if (o.isLight || o.isPoints || o.userData.noscale || o.userData.struct || o.userData.wall || o.userData.avatar || o.userData.nocol) return;
         if ((o.isGroup || o.type === 'Object3D') && o.children.length > 1 && Math.abs(o.position.x) < 1e-6 && Math.abs(o.position.z) < 1e-6) { pick(o.children); return; }
         bb.setFromObject(o); if (bb.isEmpty()) return; bb.getSize(sz);
         if (Math.max(sz.x, sz.z) > 14 || sz.y < 0.7 || Math.min(sz.x, sz.z) < 0.12) return;
-        add(bb); });
+        add(bb, o); });
       pick(s.children);
       return out;
+    }
+    let ground = 0;     // 脚下的高度：踩上台阶、楼梯会变高
+    const STEPUP = 1.5;
+    function groundAt(x, z, any) {
+      const y0 = floor === 2 ? F2 : 0, L = COL[floor]; let g = y0;
+      if (L) for (let i = 0; i < L.length; i++) { const b = L[i]; if (b.step && x >= b[0] && x <= b[2] && z >= b[1] && z <= b[3] && b.h[1] > g && (any ? b.h[1] < y0 + 6 : b.h[1] <= ground + STEPUP)) g = b.h[1]; }
+      return g;
     }
     function blocked(x, z, ox, oz) {
       const L = COL[floor];
       if (L) for (let i = 0; i < L.length; i++) { const b = L[i];
+        if (b.step && b.h[1] <= ground + STEPUP) continue;       // 迈得上去的台阶不挡
+        if (b.step && b.h[1] <= ground + 0.05) continue;
         if (x > b[0] - PR && x < b[2] + PR && z > b[1] - PR && z < b[3] + PR && !(ox > b[0] - PR && ox < b[2] + PR && oz > b[1] - PR && oz < b[3] + PR)) return true; }   // 原本就卡在里面的，允许走出来
       const px = x / K, pz = z / K, R = HOT[floor] || [];
       for (let i = 0; i < R.length; i++) { const b = R[i].box; if (b && px >= b[0] - 0.5 && px <= b[2] + 0.5 && pz >= b[1] - 0.5 && pz <= b[3] + 0.5) return false; }
@@ -1953,6 +2025,13 @@ const V3 = {};
     }
     function roomAt(x, z) { const px = x / K, pz = z / K, R = HOT[floor] || []; for (let i = 0; i < R.length; i++) { const b = R[i].box; if (b && px >= b[0] && px < b[2] && pz >= b[1] && pz < b[3]) return R[i].loc; } return null; }
     function updRoom() { const l = roomAt(pos.x, pos.z); if (l && l !== loc && VP[l]) { loc = l; vps = VP[l]; vi = -1; lbl._loc = null; el.querySelector('.walk-t b').textContent = rname(l); self.onRoom && self.onRoom(l); } }
+    let lift = 0;
+    function toFloor(f, px, pz, y) {      // 走楼梯换层
+      if (busy) return; target = null; mark.visible = false;
+      const done = () => { cur = scenes[f]; floor = f; if (!COL[f]) COL[f] = buildCol(cur, f); cur.add(mark); PEERS.forEach(placePeer); renderer.shadowMap.needsUpdate = true; wait.style.display = 'none'; busy = false;
+        pos.set(px * K, 0, pz * K); ground = groundAt(pos.x, pos.z, true); lift = ground; pos.y = ground + EYE; yaw = y; tw = null; loc = null; updRoom(); lbl._loc = null; sentKey = ''; lastSent = 0; need = true; };
+      if (scenes[f]) done(); else { busy = true; wait.style.display = ''; setTimeout(async () => { scenes[f] = await buildInterior(f, renderer); done(); }, 40); }
+    }
     const KEYS = new Set(); let joyX = 0, joyY = 0, target = null, bob = 0, lastT = 0, lastSent = 0, sentKey = '';
     const isTyping = () => { const a = document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName); };
     window.addEventListener('keydown', e => { if (!el.isConnected || isTyping()) return; KEYS.add(e.code); if (/^(Arrow|Space)/.test(e.code)) e.preventDefault(); });
@@ -1984,16 +2063,22 @@ const V3 = {};
       const sp = SPEED * (KEYS.has('ShiftLeft') || KEYS.has('ShiftRight') ? 1.7 : 1) * dt, ox = pos.x, oz = pos.z;
       const nx = pos.x + vx * sp; if (!blocked(nx, pos.z, ox, oz)) pos.x = nx;
       const nz = pos.z + vz * sp; if (!blocked(pos.x, nz, ox, oz)) pos.z = nz;
+      // 一楼从后廊进楼梯间：门正对着楼梯顶，直接送到楼梯脚下
+      if (floor === 1 && vz > 0) { const px = (pos.x + vx * sp) / K, pz = (pos.z + vz * sp) / K; if (px > 109 && px < 121 && pz > 37.7 && pz < 39.5) { pos.set(115 * K, 0, 63.2 * K); ground = groundAt(pos.x, pos.z, true); lift = ground; pos.y = ground + EYE; yaw = Math.PI; updRoom(); return true; } }
+      // 二楼往北走进楼梯井：下楼
+      if (floor === 2 && vz < 0) { const px = (pos.x + vx * sp) / K, pz = (pos.z + vz * sp) / K; if (px > 108.5 && px < 121.5 && pz < 54.4) { toFloor(1, 115, 51, 0); return true; } }
       const md = Math.hypot(pos.x - ox, pos.z - oz);
       if (target && md < sp * 0.2) { target = null; mark.visible = false; }       // 被挡住就停下
-      bob += md * 1.1; pos.y = (floor === 2 ? F2 : 0) + EYE + Math.sin(bob) * 0.06;
+      ground = groundAt(pos.x, pos.z);
+      bob += md * 1.1; lift += (ground - lift) * Math.min(1, dt * 12); pos.y = lift + EYE + Math.sin(bob) * 0.06;
+      if (floor === 1 && ground > 4.3) { toFloor(2, 115, 55.5, 0); return true; }   // 一楼楼梯走到上半截：到二楼
       updRoom(); return true;
     }
     function sendPos(now) {
       if (!self.onMove || !cur || now - lastSent < 220) return;
       const k = floor + ',' + (pos.x / K).toFixed(1) + ',' + (pos.z / K).toFixed(1) + ',' + yaw.toFixed(1);
       if (k === sentKey) return; sentKey = k; lastSent = now;
-      self.onMove({ f: floor, x: +(pos.x / K).toFixed(2), z: +(pos.z / K).toFixed(2), yaw: +yaw.toFixed(3), loc });
+      self.onMove({ f: floor, x: +(pos.x / K).toFixed(2), z: +(pos.z / K).toFixed(2), g: +ground.toFixed(2), yaw: +yaw.toFixed(3), loc });
     }
     /* ---------- 其他玩家：人物模型 + 名牌，位置平滑插值，走路摆腿 ---------- */
     const OUTFIT = {
@@ -2014,7 +2099,7 @@ const V3 = {};
       if (!p) { p = { id, x: d.x, z: d.z, yaw: d.yaw || 0, tx: d.x, tz: d.z, tyaw: d.yaw || 0, ph: 0, g: null, f: d.f === 2 ? 2 : 1 };
         PEERS.set(id, p); p.lab = document.createElement('div'); p.lab.className = 'walk-peer'; pbox.appendChild(p.lab); }
       const f = d.f === 2 ? 2 : 1; if (p.f !== f) { p.x = d.x; p.z = d.z; p.f = f; }
-      p.tx = d.x; p.tz = d.z; p.tyaw = d.yaw || 0; p.lab.textContent = d.name || id; placePeer(p); need = true;
+      p.tx = d.x; p.tz = d.z; p.tg = typeof d.g === 'number' ? d.g : (f === 2 ? F2 : 0); p.tyaw = d.yaw || 0; p.lab.textContent = d.name || id; placePeer(p); need = true;
     };
     self.peerGone = id => { const p = PEERS.get(id); if (!p) return; if (p.g && p.g.parent) p.g.parent.remove(p.g); p.lab.remove(); PEERS.delete(id); need = true; };
     function stepPeers(dt) {
@@ -2023,7 +2108,7 @@ const V3 = {};
         if (!p.g) return;
         const dx = p.tx - p.x, dz = p.tz - p.z, d = Math.hypot(dx, dz); p.x += dx * k; p.z += dz * k;
         let dy = p.tyaw - p.yaw; while (dy > Math.PI) dy -= 2 * Math.PI; while (dy < -Math.PI) dy += 2 * Math.PI; p.yaw += dy * k;
-        p.g.position.set(p.x * K, p.f === 2 ? F2 : 0, p.z * K); p.g.rotation.y = p.yaw - Math.PI / 2;
+        p.gy = p.gy === undefined ? p.tg : p.gy + ((p.tg ?? 0) - p.gy) * k; p.g.position.set(p.x * K, p.gy ?? (p.f === 2 ? F2 : 0), p.z * K); p.g.rotation.y = p.yaw - Math.PI / 2;
         const walking = d > 0.05, B = p.g.userData.bones, base = p.g.userData.base;
         if (B && base && (walking || p.ph)) {
           if (walking) p.ph += dt * 8; else { p.ph = Math.abs(Math.sin(p.ph)) < 0.08 ? 0 : p.ph + dt * 8; }
@@ -2038,7 +2123,7 @@ const V3 = {};
     function peerLabels() {
       PEERS.forEach(p => {
         if (!p.g || p.f !== floor) { p.lab.style.display = 'none'; return; }
-        PV.set(p.x * K, (p.f === 2 ? F2 : 0) + 5.4, p.z * K); const dist = PV.distanceTo(pos); PV.project(cam);
+        PV.set(p.x * K, (p.gy ?? (p.f === 2 ? F2 : 0)) + 5.4, p.z * K); const dist = PV.distanceTo(pos); PV.project(cam);
         const x = (PV.x + 1) / 2 * W, y = (1 - PV.y) / 2 * H;
         if (PV.z > 1 || dist > 70 || x < -50 || x > W + 50 || y < -30 || y > H + 30) { p.lab.style.display = 'none'; return; }
         p.lab.style.display = ''; p.lab.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-100%)`;
@@ -2075,7 +2160,7 @@ const V3 = {};
       if (changed && self.onRoom) self.onRoom(l);
       const idx = list.indexOf(v);
       if (floor === v.f && cur && !instant) { go(idx); return; }
-      const start = () => { cur = scenes[v.f]; floor = v.f; if (!COL[v.f]) COL[v.f] = buildCol(cur, v.f); cur.add(mark); mark.visible = false; target = null; PEERS.forEach(placePeer); renderer.shadowMap.needsUpdate = true; wait.style.display = 'none'; busy = false; go(idx, true); need = true; };
+      const start = () => { cur = scenes[v.f]; floor = v.f; ground = lift = v.f === 2 ? F2 : 0; if (!COL[v.f]) COL[v.f] = buildCol(cur, v.f); cur.add(mark); mark.visible = false; target = null; PEERS.forEach(placePeer); renderer.shadowMap.needsUpdate = true; wait.style.display = 'none'; busy = false; go(idx, true); need = true; };
       if (scenes[v.f]) start(); else { busy = true; wait.style.display = ''; setTimeout(async () => { scenes[v.f] = await buildInterior(v.f, renderer); start(); }, 40); }
     }
     self.enter = (l) => { if (l === loc && cur) return; moveTo(l, 0, true); };
@@ -2085,7 +2170,7 @@ const V3 = {};
     self.sub = (h) => { el.querySelector('.walk-t small').innerHTML = h; };
     self.loc = () => loc; self._scene = () => cur; self._renderer = () => renderer; self._pos = () => pos.toArray();
     self.go = (i) => go(i, true);
-    self._dbg = { blocked: (x, z) => blocked(x, z, pos.x, pos.z), col: () => COL[floor], step: (code, n, dt) => { KEYS.add(code); for (let i = 0; i < n; i++) walkStep(dt || 0.05); KEYS.delete(code); need = true; return pos.toArray(); } };
+    self._dbg = { line: (x0, z0, x1, z1) => { pos.set(x0 * K, 0, z0 * K); ground = floor === 2 ? F2 : 0; ground = groundAt(pos.x, pos.z); const n = Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 0.25); for (let i = 1; i <= n; i++) { const x = (x0 + (x1 - x0) * i / n) * K, z = (z0 + (z1 - z0) * i / n) * K; if (blocked(x, z, pos.x, pos.z)) return [false, +(pos.x / K).toFixed(1), +(pos.z / K).toFixed(1)]; pos.x = x; pos.z = z; ground = groundAt(x, z); } return [true, +ground.toFixed(2)]; }, ground: () => ground, toFloor: (f, x, z, y) => toFloor(f, x, z, y), blocked: (x, z) => blocked(x, z, pos.x, pos.z), col: () => COL[floor], step: (code, n, dt) => { KEYS.add(code); for (let i = 0; i < n; i++) walkStep(dt || 0.05); KEYS.delete(code); need = true; return pos.toArray(); } };
     self.turn = (d) => { yaw += d; need = true; };
     self.cam = (p, y, pt, fov) => { pos.set(p[0] * K, p[1], p[2] * K); yaw = y; pitch = pt; if (fov) { cam.fov = fov; cam.updateProjectionMatrix(); } need = true; };
     el.querySelector('[data-w=back]').onclick = () => self.onBack && self.onBack();
