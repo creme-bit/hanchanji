@@ -6,4 +6,4 @@
 
 ## 素材
 
-室内家具、灯具、摆件的 3D 模型来自 [Poly Haven](https://polyhaven.com)，均为 CC0 授权。
+室内家具、灯具、摆件的 3D 模型，以及地板、墙面、天花的材质贴图和环境光照图，来自 [Poly Haven](https://polyhaven.com)，均为 CC0 授权。

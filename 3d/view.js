@@ -231,6 +231,20 @@ const V3 = {};
   function cvs(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return c; }
   function ctex(c, srgb = true, rep) { const t = new THREE.CanvasTexture(c); if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; if (rep) t.repeat.set(...rep); return t; }
   let IM = null;
+  const RT = {};
+  function loadImg(u) { return new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = u; }); }
+  const RNAMES = ['velour_velvet', 'herringbone_parquet', 'plank_flooring', 'plank_flooring_02', 'terrazzo_tiles', 'patterned_terracotta_tiling', 'interior_tiles', 'grey_cartago_01', 'patterned_brick_floor', 'dark_wood', 'wooden_panels', 'plastered_wall_04', 'white_stucco', 'lacquered_cherry_wood'];
+  async function realTex() {
+    if (RT._ok) return;
+    await Promise.all(RNAMES.map(async n => { RT[n] = {}; await Promise.all(['diff', 'nor', 'rough'].map(async k => { try { RT[n][k] = await loadImg(`3d/tex/${n}_${k}.webp`); } catch (e) { } })); }));
+    try { RT._env = await loadImg('3d/tex/env_reading_room.jpg'); } catch (e) { }
+    RT._ok = 1;
+  }
+  const RTX = {};
+  function rtx(n, k) { const key = n + k; if (RTX[key] !== undefined) return RTX[key]; const img = RT[n] && RT[n][k]; if (!img) return RTX[key] = null;
+    const t = new THREE.Texture(img); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (k === 'diff') t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.needsUpdate = true; return RTX[key] = t; }
+  const RMAT = {};
+  function rmat(n, tint, opt = {}) { const key = n + tint + JSON.stringify(opt); return RMAT[key] || (RMAT[key] = new THREE.MeshStandardMaterial(Object.assign({ map: rtx(n, 'diff'), normalMap: rtx(n, 'nor'), roughnessMap: rtx(n, 'rough'), roughness: 1, color: tint }, opt))); }
   function imats() {
     if (IM) return IM;
     IM = {};
@@ -246,7 +260,7 @@ const V3 = {};
     });
     IM.grain = ctex(grain); IM.grainB = ctex(grain, false);
     const woodCache = {};
-    IM.wood = (color, rough = 0.42) => woodCache[color + rough] || (woodCache[color + rough] = new THREE.MeshStandardMaterial({ map: IM.grain, bumpMap: IM.grainB, bumpScale: 0.6, color: new THREE.Color(color).multiplyScalar(1.45), roughness: rough, metalness: 0.05 }));
+    IM.wood = (color, rough = 0.42) => woodCache[color + rough] || (woodCache[color + rough] = rtx('dark_wood', 'diff') ? new THREE.MeshStandardMaterial({ map: rtx('dark_wood', 'diff'), normalMap: rtx('dark_wood', 'nor'), color: new THREE.Color(color).multiplyScalar(2.6), roughness: rough, metalness: 0.05 }) : new THREE.MeshStandardMaterial({ map: IM.grain, bumpMap: IM.grainB, bumpScale: 0.6, color: new THREE.Color(color).multiplyScalar(1.45), roughness: rough, metalness: 0.05 }));
     // 丝绒（拉扣）
     const velvet = (base) => cvs(256, 256, (g, w, h) => {
       g.fillStyle = base; g.fillRect(0, 0, w, h);
@@ -263,7 +277,7 @@ const V3 = {};
     IM.curtainG = new THREE.MeshStandardMaterial({ color: 0x23342c, roughness: 0.9, side: THREE.DoubleSide });
     IM.sheer = new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.9, transparent: true, opacity: 0.4, side: THREE.DoubleSide });
     // 墙：护墙板 + 墙纸 / 满墙木板（一块 6 尺宽、10.5 尺高）
-    const PX = 85, WW = 6 * PX, WH = Math.round(IH * PX), Y = v => WH - v * PX;
+    const PX = 140, WW = 6 * PX, WH = Math.round(IH * PX), Y = v => WH - v * PX;
     function panel(g, x, y0, y1, w, dark, light) {
       g.fillStyle = dark; g.fillRect(x, Y(y1), w, (y1 - y0) * PX);
       g.strokeStyle = light; g.lineWidth = 3; g.strokeRect(x + 2, Y(y1) + 2, w - 4, (y1 - y0) * PX - 4);
@@ -272,10 +286,13 @@ const V3 = {};
     }
     function wallC(style) {
       return cvs(WW, WH, (g) => {
-        const gr = g.createPattern(grain, 'repeat');
-        if (style === 'wood') { g.fillStyle = '#4a2a18'; g.fillRect(0, 0, WW, WH); g.globalAlpha = 0.5; g.fillStyle = gr; g.fillRect(0, 0, WW, WH); g.globalAlpha = 1; }
+        const pat = (img, units, fallback) => { if (!img) return fallback; const p = g.createPattern(img, 'repeat'); const k = units * PX / img.width; if (p.setTransform) p.setTransform(new DOMMatrix().scale(k)); return p; };
+        const W1 = RT.dark_wood && RT.dark_wood.diff, PL = RT.plastered_wall_04 && RT.plastered_wall_04.diff;
+        const gr = pat(W1, 2.2, g.createPattern(grain, 'repeat'));
+        if (style === 'wood') { g.fillStyle = '#4a2a18'; g.fillRect(0, 0, WW, WH); g.globalAlpha = W1 ? 0.95 : 0.5; g.fillStyle = gr; g.fillRect(0, 0, WW, WH); g.globalAlpha = 1; if (W1) { g.fillStyle = 'rgba(40,18,6,.25)'; g.fillRect(0, 0, WW, WH); } }
         else {
           g.fillStyle = '#2f3b33'; g.fillRect(0, 0, WW, WH);
+          if (PL) { g.fillStyle = pat(PL, 4, '#2f3b33'); g.fillRect(0, 0, WW, WH); g.globalCompositeOperation = 'multiply'; g.fillStyle = '#4a5a48'; g.fillRect(0, 0, WW, WH); g.globalCompositeOperation = 'source-over'; }
           for (let y = 0; y < WH; y += 64) for (let x = (y / 64) % 2 ? 32 : 0; x < WW + 32; x += 64) {
             g.fillStyle = 'rgba(190,170,110,.10)'; g.beginPath(); g.moveTo(x, y - 22); g.quadraticCurveTo(x + 14, y, x, y + 22); g.quadraticCurveTo(x - 14, y, x, y - 22); g.fill();
             g.beginPath(); g.arc(x, y, 4, 0, 7); g.fill(); g.strokeStyle = 'rgba(190,170,110,.08)'; g.beginPath(); g.arc(x, y, 14, 0, 7); g.stroke();
@@ -285,7 +302,7 @@ const V3 = {};
         if (style === 'wood') for (let i = 0; i < 2; i++) panel(g, i * WW / 2 + 14, 4.2, 9.0, WW / 2 - 28, 'rgba(110,62,32,.55)', 'rgba(255,210,150,.15)');
         // 护墙板
         g.fillStyle = '#3a2112'; g.fillRect(0, Y(3.7), WW, 3.7 * PX);
-        g.globalAlpha = 0.45; g.fillStyle = gr; g.fillRect(0, Y(3.7), WW, 3.7 * PX); g.globalAlpha = 1;
+        g.globalAlpha = W1 ? 0.9 : 0.45; g.fillStyle = gr; g.fillRect(0, Y(3.7), WW, 3.7 * PX); g.globalAlpha = 1;
         for (let i = 0; i < 2; i++) panel(g, i * WW / 2 + 12, 0.75, 3.3, WW / 2 - 24, 'rgba(90,50,26,.6)', 'rgba(255,210,150,.16)');
         // 腰线、踢脚、顶线
         const band = (y0, y1, c, hi) => { g.fillStyle = c; g.fillRect(0, Y(y1), WW, (y1 - y0) * PX); g.fillStyle = hi; g.fillRect(0, Y(y1), WW, 3); g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(0, Y(y0) - 3, WW, 3); };
@@ -306,7 +323,7 @@ const V3 = {};
     IM.door = new THREE.MeshStandardMaterial({ map: ctex(doorC), bumpMap: ctex(doorC, false), bumpScale: 1, roughness: 0.5 });
     // 天花：石膏 + 线脚
     const ceilC = cvs(256, 256, (g, w, h) => { g.fillStyle = '#d6ccb6'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(120,100,70,.25)'; g.lineWidth = 3; g.strokeRect(10, 10, w - 20, h - 20); g.strokeRect(22, 22, w - 44, h - 44); });
-    IM.ceil = new THREE.MeshStandardMaterial({ map: ctex(ceilC, true, [12, 6]), roughness: 0.95 });
+    IM.ceil = rtx('white_stucco', 'diff') ? (() => { const m = new THREE.MeshStandardMaterial({ map: rtx('white_stucco', 'diff').clone(), normalMap: rtx('white_stucco', 'nor') && rtx('white_stucco', 'nor').clone(), color: 0xd8ccb4, roughness: 0.95 }); m.map.repeat.set(20, 8); m.map.needsUpdate = true; if (m.normalMap) { m.normalMap.repeat.set(20, 8); m.normalMap.needsUpdate = true; } return m; })() : new THREE.MeshStandardMaterial({ map: ctex(ceilC, true, [12, 6]), roughness: 0.95 });
     return IM;
   }
   const WOODS = new Set(['#6b4128', '#3f2516', '#9a6a42', '#4a2e1c', '#8a5a36', '#b88a5a', '#5a3a24', '#4a261a', '#5a2e1e', '#6b4a2e', '#3a1f12', '#5a3420', '#7a5a3a']);
@@ -316,7 +333,7 @@ const V3 = {};
     if (!gltfLoader) gltfLoader = new THREE.GLTFLoader();
     return GL[id] || (GL[id] = new Promise((ok, no) => gltfLoader.load('3d/models/' + id + '.glb', g => {
       g.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; const ms = Array.isArray(o.material) ? o.material : [o.material];
-        ms.forEach(m => { if (IM && IM.brass.envMap) { m.envMap = IM.brass.envMap; m.envMapIntensity = 0.55; } m.needsUpdate = true; }); } });
+        ms.forEach(m => { m.envMapIntensity = 0.5; m.needsUpdate = true; }); } });
       ok(g.scene); }, undefined, no)));
   }
   function model(p, id, x, y, z, ry = 0, sc = 3, opt = {}) {
@@ -506,7 +523,22 @@ const V3 = {};
       return g;
     };
     keep.floor = M.floor; keep.bookcase = M.bookcase; keep.slumped = M.slumped;
-    M.floor = (p, x0, z0, x1, z1, tx, scale = 12, y = 0.02, opt) => keep.floor(p, x0, z0, x1, z1, tx, scale * 0.45, y, Object.assign({ roughness: 0.45, color: 0xa08c78 }, opt || {}));
+    keep.carpet = M.carpet;
+    M.carpet = (p, x0, z0, x1, z1, field, border, y = 0.05) => {
+      const w = x1 - x0, d = z1 - z0, geo = new THREE.PlaneGeometry(w, d);
+      const nm = rtx('velour_velvet', 'nor'); let nm2 = null; if (nm) { nm2 = nm.clone(); nm2.repeat.set(w / 3, d / 3); nm2.needsUpdate = true; }
+      const m = new THREE.MeshStandardMaterial({ map: TX.carpet(field, border), normalMap: nm2, normalScale: new THREE.Vector2(0.6, 0.6), roughness: 1, color: 0xb09888 });
+      const o = new THREE.Mesh(geo, m); o.rotation.x = -Math.PI / 2; o.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); o.receiveShadow = true; p.add(o);
+      // 地毯边缘有点厚度
+      const e = new THREE.Mesh(new THREE.BoxGeometry(w, 0.08, d), new THREE.MeshStandardMaterial({ color: 0x2a1410, roughness: 1 })); e.position.set((x0 + x1) / 2, y - 0.05, (z0 + z1) / 2); p.add(e);
+      return o;
+    };
+    M.floor = (p, x0, z0, x1, z1, tx, scale = 12, y = 0.02, opt) => {
+      if (!tx || !tx.real || !RT[tx.real] || !RT[tx.real].diff) return keep.floor(p, x0, z0, x1, z1, tx && tx.real ? TXK[tx.k](tx.a) : tx, scale * 0.45, y, Object.assign({ roughness: 0.45, color: 0xa08c78 }, opt || {}));
+      const w = x1 - x0, d = z1 - z0, geo = new THREE.PlaneGeometry(w, d), uv = geo.attributes.uv;
+      for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * w / tx.s + x0 / tx.s, uv.getY(i) * d / tx.s + z0 / tx.s);
+      const o = new THREE.Mesh(geo, rmat(tx.real, tx.tint || 0xffffff)); o.rotation.x = -Math.PI / 2; o.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); o.receiveShadow = true; p.add(o); return o;
+    };
     M.bookcase = (p, x, z, w, d, h, ry = 0) => {
       const g = M.group(p, x, 0, z, ry), m = W('#3a1f12');
       add(g, new THREE.BoxGeometry(w, h, 0.2), m, 0, h / 2, -d / 2 + 0.1);
@@ -555,14 +587,23 @@ const V3 = {};
     };
     return () => { Object.assign(M, keep); };
   }
+  let TXK = null;
   function interior(fn, f) {
     imats();
-    const ow = M.wall, od = M.door, ot = M.table, oc = M.chair, oa = M.armchair, os = M.sofa, owr = M.wardrobe, of = M.floor, ob = M.bookcase, osl = M.slumped, osc = M.screen, opl = M.plant, ort = M.roundTable;
+    TXK = { herring: TX.herring, plank: TX.plank, terrazzo: TX.terrazzo, tile: TX.tile, flowerTile: TX.flowerTile, square: TX.square, brick: TX.brick };
+    TX.herring = () => ({ real: 'herringbone_parquet', s: 6, tint: 0x9a7a60, k: 'herring' });
+    TX.plank = (a) => ({ real: a && a[0] < 160 ? 'plank_flooring' : 'plank_flooring_02', s: 7, tint: a && a[0] < 160 ? 0xc0a890 : 0xa89078, k: 'plank', a });
+    TX.terrazzo = () => ({ real: 'terrazzo_tiles', s: 7, tint: 0xb8b0a0, k: 'terrazzo' });
+    TX.tile = () => ({ real: 'patterned_terracotta_tiling', s: 5, tint: 0xc8b8a8, k: 'tile' });
+    TX.flowerTile = () => ({ real: 'interior_tiles', s: 4, tint: 0xe0d8c8, k: 'flowerTile' });
+    TX.square = () => ({ real: 'grey_cartago_01', s: 6, tint: 0xa8a098, k: 'square' });
+    TX.brick = () => ({ real: 'patterned_brick_floor', s: 7, tint: 0xa89080, k: 'brick' });
+    const ocp = M.carpet, ow = M.wall, od = M.door, ot = M.table, oc = M.chair, oa = M.armchair, os = M.sofa, owr = M.wardrobe, of = M.floor, ob = M.bookcase, osl = M.slumped, osc = M.screen, opl = M.plant, ort = M.roundTable;
     M.wall = iwall(y => (y > 6 ? 'wood' : 'paper'));
     M.door = (p, x, z, w, angle) => { const g = M.group(p, x, 0, z, angle); const b = M.box(g, w, 7.3, 0.25, w / 2, 0, 0, IM.door); M.cyl(g, 0.12, 0.12, 0.5, w - 0.5, 3.6, 0.2, IM.brass); return g; };
     M.matHook = (color, opt) => (WOODS.has(color) && !opt.transparent ? IM.wood(color) : null);
     richFurniture();
-    try { fn(); } finally { M.wall = ow; M.door = od; M.table = ot; M.chair = oc; M.armchair = oa; M.sofa = os; M.wardrobe = owr; M.floor = of; M.bookcase = ob; M.slumped = osl; M.screen = osc; M.plant = opl; M.roundTable = ort; M.matHook = null; }
+    try { fn(); } finally { Object.assign(TX, TXK); M.wall = ow; M.door = od; M.table = ot; M.chair = oc; M.armchair = oa; M.sofa = os; M.wardrobe = owr; M.floor = of; M.carpet = ocp; M.bookcase = ob; M.slumped = osl; M.screen = osc; M.plant = opl; M.roundTable = ort; M.matHook = null; }
   }
   function decorate(s, f) {
     if (f === 2) {
@@ -620,11 +661,13 @@ const V3 = {};
   const ROOMS1 = [[57, 52], [57, 76], [94, 51], [94, 77], [137, 62], [115, 77], [15, 64], [75, 34], [-23, 20]];
   const ROOMS2 = [[75, 75], [25, 75], [125, 75], [30, 56], [95, 56], [135, 56], [25, 41], [79, 41]];
   const DIM = { '125,75': 0.35, '135,56': 0.6 };
-  function buildInterior(f, renderer) {
+  async function buildInterior(f, renderer) {
+    await realTex();
     const s = new THREE.Scene();
     s.background = new THREE.Color(0x0a0c14); s.fog = new THREE.Fog(0x0a0c14, 90, 260);
     interior(() => { if (f === 1) SCENE.buildGround(s); else SCENE.buildUpper(s); oldShop(s); }, f);
-    if (renderer && !IM.brass.envMap) { const e = envMap(renderer); IM.brass.envMap = e; }
+    if (renderer && RT._env && !RT._pm) { const t = new THREE.Texture(RT._env); t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace; t.needsUpdate = true; const pm = new THREE.PMREMGenerator(renderer); RT._pm = pm.fromEquirectangular(t).texture; pm.dispose(); }
+    if (RT._pm) s.environment = RT._pm; else if (renderer && !IM.brass.envMap) IM.brass.envMap = envMap(renderer);
     const y0 = f === 2 ? F2 : 0;
     const ce = new THREE.Mesh(new THREE.BoxGeometry(151, 0.4, 61), IM.ceil); ce.position.set(75, y0 + IH + 0.2, 60); ce.castShadow = ce.receiveShadow = true; s.add(ce);
     if (f === 1) { const c2 = new THREE.Mesh(new THREE.BoxGeometry(27, 0.4, 25), IM.ceil); c2.position.set(-23, IH + 0.2, 20); c2.castShadow = true; s.add(c2); }
@@ -637,7 +680,7 @@ const V3 = {};
     s.add(moon, moon.target);
     (f === 1 ? ROOMS1 : ROOMS2).forEach(([x, z]) => {
       const k = DIM[x + ',' + z] ?? 1;
-      const l = new THREE.PointLight(0xffb36a, 110 * k, 34, 1.6); l.position.set(x, y0 + IH - 2.8, z); s.add(l);
+      const l = new THREE.PointLight(0xffb36a, 120 * k, 36, 1.6); l.position.set(x, y0 + IH - 4.2, z); s.add(l);
     });
     if (f === 2) { const l = new THREE.PointLight(0xffd090, 22, 12, 1.5); l.position.set(70.5, F2 + 4.4, 74.6); s.add(l); }
     if (f === 1) {
@@ -646,6 +689,7 @@ const V3 = {};
       const lt = new THREE.PointLight(0xffa850, 60, 26, 1.6); lt.position.set(40, 6, 104); s.add(lt);
       const lt2 = new THREE.PointLight(0xffa850, 40, 22, 1.6); lt2.position.set(17, 7, 21); s.add(lt2);
     }
+    s.traverse(o => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.envMapIntensity !== undefined && m !== IM.brass) m.envMapIntensity = 0.32; }); });
     return s;
   }
   // 机位：look = 初始朝向点
@@ -800,7 +844,7 @@ const V3 = {};
       el.querySelector('.walk-t b').textContent = title || l; el.querySelector('.walk-t small').textContent = sub || '';
       const f = vps[0].f;
       const start = () => { cur = scenes[f]; wait.style.display = 'none'; go(0, true); need = true; };
-      if (scenes[f]) start(); else { wait.style.display = ''; cur = null; setTimeout(() => { scenes[f] = buildInterior(f, renderer); start(); }, 40); }
+      if (scenes[f]) start(); else { wait.style.display = ''; cur = null; setTimeout(async () => { scenes[f] = await buildInterior(f, renderer); start(); }, 40); }
       lbl._loc = null;
     };
     self.attach = (host) => { host.appendChild(el); fit(); if (!raf) raf = requestAnimationFrame(frame); need = true; };
