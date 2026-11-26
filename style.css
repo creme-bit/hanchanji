@@ -236,3 +236,17 @@ body:has(.composer) .nav button.mid b{width:44px;height:44px;margin:-8px auto 2p
 .chat{min-height:calc(100dvh - 340px - env(safe-area-inset-bottom))}
 .walk-mini{position:absolute;right:10px;top:calc(62px + env(safe-area-inset-top));width:120px;height:85px;border-radius:8px;border:1px solid #6a5434;pointer-events:none;box-shadow:0 2px 10px #0008}
 @media (min-width:700px){.walk-mini{width:180px;height:128px}}
+/* 全景街景 */
+.pano .walk-go{border-style:solid;border-color:rgba(243,236,220,.55);background:rgba(10,10,12,.5);backdrop-filter:blur(2px)}
+.pano .walk-go.door{border-color:#c6a46a}
+.pano-fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s ease}
+.pano-fade.on{opacity:1;transition:opacity .42s ease-in}
+.pano-dbg{position:absolute;left:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:3;font:inherit;font-size:12px;padding:4px 10px;border-radius:6px;border:1px dashed #8a7a5c;background:#000a;color:#bcab8b;opacity:.75}
+#stage .pano-dbg{bottom:calc(138px + env(safe-area-inset-bottom))}
+.pano-dbg.on{border-style:solid;border-color:#ff8a6a;color:#ffb39e;opacity:1}
+.pano.debug canvas{cursor:crosshair!important}
+.pano-pick{display:none;position:absolute;z-index:4;width:236px;padding:8px 10px;border-radius:8px;background:#141210ee;border:1px solid #6a5434;color:#e8dcc2;font-size:12px;line-height:1.5;box-shadow:0 4px 16px #000a}
+.pano-pick code{display:block;margin:4px 0;font-size:14px;color:#ffcf7a;user-select:all;-webkit-user-select:all}
+.pano-pick small{display:block;color:#9a8b74}
+.pano-pick button{margin-top:4px;font:inherit;font-size:12px;padding:2px 10px;border-radius:5px;border:1px solid #c6a46a;background:#2a2016;color:#f3e6c8}
+.pano-pick em{margin-left:8px;color:#8fd08f;font-style:normal}

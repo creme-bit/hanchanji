@@ -1,0 +1,266 @@
+[
+ {
+  "id": "chufang-1",
+  "room": "厨房",
+  "view": "条案边",
+  "file": "assets/panoramas/chufang-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, an old Chinese kitchen: a brick stove with an iron wok and a bowl of lotus seed soup kept warm, cold grey ash in the stove mouth, a long wooden side table with seasoning jars, a big water vat, bamboo baskets, hanging dried herbs and garlic, viewpoint beside the long side table, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "chufang-2",
+  "room": "厨房",
+  "view": "灶台前",
+  "file": "assets/panoramas/chufang-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, an old Chinese kitchen: a brick stove with an iron wok and a bowl of lotus seed soup kept warm, cold grey ash in the stove mouth, a long wooden side table with seasoning jars, a big water vat, bamboo baskets, hanging dried herbs and garlic, viewpoint in front of the stove, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "dongxiang-1",
+  "room": "一楼东厢（顾雪芝）",
+  "view": "屋里",
+  "file": "assets/panoramas/dongxiang-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, a widow's bedroom: carved Chinese canopy bed with smooth embroidered bedding, a rosewood vanity with a dressing case and round mirror, a wardrobe with qipao dresses, a pair of embroidered silk shoes beside the bed, paper window lattice, viewpoint in the middle of the room, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "dongxiang-2",
+  "room": "一楼东厢（顾雪芝）",
+  "view": "妆台边",
+  "file": "assets/panoramas/dongxiang-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, a widow's bedroom: carved Chinese canopy bed with smooth embroidered bedding, a rosewood vanity with a dressing case and round mirror, a wardrobe with qipao dresses, a pair of embroidered silk shoes beside the bed, paper window lattice, viewpoint beside the vanity, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "houlang-1",
+  "room": "后廊",
+  "view": "西段",
+  "file": "assets/panoramas/houlang-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, a long narrow ground floor back corridor: a wooden back door with its bolt pulled open, a large glazed water vat with dead leaves floating, doorways to the kitchen and the staircase, plaster walls with dark wooden wainscot, viewpoint at the west end, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "houlang-2",
+  "room": "后廊",
+  "view": "东段",
+  "file": "assets/panoramas/houlang-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, a long narrow ground floor back corridor: a wooden back door with its bolt pulled open, a large glazed water vat with dead leaves floating, doorways to the kitchen and the staircase, plaster walls with dark wooden wainscot, viewpoint at the east end, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "houyuan-1",
+  "room": "后院",
+  "view": "井边",
+  "file": "assets/panoramas/houyuan-1.webp",
+  "prompt": "360 equirectangular panorama, outdoor courtyard of an old 1930s Republic of China mansion in Qingpu near Shanghai, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, grey brick walls, bare winter trees, damp ground, natural soft shadows, photorealistic, seamless 360 view, muddy back courtyard with grey-green clay ground: an old stone well sealed with a heavy bluestone slab, a woodshed stacked with split firewood, a small steward's house with a closed door and dark window, the back door of the mansion, viewpoint beside the well, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "houyuan-2",
+  "room": "后院",
+  "view": "柴房前",
+  "file": "assets/panoramas/houyuan-2.webp",
+  "prompt": "360 equirectangular panorama, outdoor courtyard of an old 1930s Republic of China mansion in Qingpu near Shanghai, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, grey brick walls, bare winter trees, damp ground, natural soft shadows, photorealistic, seamless 360 view, muddy back courtyard with grey-green clay ground: an old stone well sealed with a heavy bluestone slab, a woodshed stacked with split firewood, a small steward's house with a closed door and dark window, the back door of the mansion, viewpoint in front of the woodshed, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "keting-1",
+  "room": "客厅",
+  "view": "沙发边",
+  "file": "assets/panoramas/keting-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, western style parlor: an old gramophone with a vinyl record, a glass display cabinet with liquor bottles, porcelain plates and a pair of brass candlesticks, a round tea table with a tea set and two cups of cold tea, leather sofa and armchairs, framed European landscape oil painting, faded patterned carpet, viewpoint beside the sofa, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "keting-2",
+  "room": "客厅",
+  "view": "陈列柜前",
+  "file": "assets/panoramas/keting-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, western style parlor: an old gramophone with a vinyl record, a glass display cabinet with liquor bottles, porcelain plates and a pair of brass candlesticks, a round tea table with a tea set and two cups of cold tea, leather sofa and armchairs, framed European landscape oil painting, faded patterned carpet, viewpoint in front of the display cabinet, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "laohao-1",
+  "room": "老号（公馆后门外三十步）",
+  "view": "进门",
+  "file": "assets/panoramas/laohao-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China herbal medicine shop, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, interior of an old traditional Chinese herbal medicine shop: a wall of small wooden drawers labeled with herb names, a long wooden counter with a dispensing ledger and brass scale, a locked account cabinet, a camphor wood chest, an old gatekeeper in a padded jacket sitting near the door, viewpoint just inside the shop entrance, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "laohao-2",
+  "room": "老号（公馆后门外三十步）",
+  "view": "药柜前",
+  "file": "assets/panoramas/laohao-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China herbal medicine shop, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, interior of an old traditional Chinese herbal medicine shop: a wall of small wooden drawers labeled with herb names, a long wooden counter with a dispensing ledger and brass scale, a locked account cabinet, a camphor wood chest, an old gatekeeper in a padded jacket sitting near the door, viewpoint in front of the herb drawer wall, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "louti-1",
+  "room": "楼梯",
+  "view": "楼梯口",
+  "file": "assets/panoramas/louti-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, a dim staircase hall: worn creaky dark wooden stairs with turned balusters going up to the second floor, a low doorway to the servants' room, viewpoint at the stair landing, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "qianting-1",
+  "room": "前厅",
+  "view": "大门内",
+  "file": "assets/panoramas/qianting-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, grand front dining hall: a long rectangular banquet table half cleared with porcelain bowls and plates, ten carved rosewood chairs with one empty seat, a black lacquered horizontal plaque with gold calligraphy hanging above the head seat, a tall grandfather clock in the corner, double wooden front doors with glass panes, dark red-brown wooden floor, viewpoint just inside the front doors, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "qianting-2",
+  "room": "前厅",
+  "view": "主位边",
+  "file": "assets/panoramas/qianting-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, grand front dining hall: a long rectangular banquet table half cleared with porcelain bowls and plates, ten carved rosewood chairs with one empty seat, a black lacquered horizontal plaque with gold calligraphy hanging above the head seat, a tall grandfather clock in the corner, double wooden front doors with glass panes, dark red-brown wooden floor, viewpoint beside the head seat of the table, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "qianyuan-1",
+  "room": "前院",
+  "view": "院中",
+  "file": "assets/panoramas/qianyuan-1.webp",
+  "prompt": "360 equirectangular panorama, outdoor courtyard of an old 1930s Republic of China mansion in Qingpu near Shanghai, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, grey brick walls, bare winter trees, damp ground, natural soft shadows, photorealistic, seamless 360 view, front courtyard: stone steps leading up to the double front door, a long second floor balcony with railings above the entrance, an old night watchman in a grey cotton robe holding a paper lantern, the courtyard gate, bare trees, viewpoint in the middle of the courtyard, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "qianyuan-2",
+  "room": "前院",
+  "view": "台阶下",
+  "file": "assets/panoramas/qianyuan-2.webp",
+  "prompt": "360 equirectangular panorama, outdoor courtyard of an old 1930s Republic of China mansion in Qingpu near Shanghai, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, grey brick walls, bare winter trees, damp ground, natural soft shadows, photorealistic, seamless 360 view, front courtyard: stone steps leading up to the double front door, a long second floor balcony with railings above the entrance, an old night watchman in a grey cotton robe holding a paper lantern, the courtyard gate, bare trees, viewpoint at the foot of the front steps, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "xiarenfang-1",
+  "room": "下人房",
+  "view": "屋里",
+  "file": "assets/panoramas/xiarenfang-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, a small servants' room: two narrow plank beds with neatly folded blue cotton quilts, a plain wooden trunk, whitewashed walls, one small window, viewpoint in the middle of the room, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "xixiang-1",
+  "room": "西厢",
+  "view": "屋里",
+  "file": "assets/panoramas/xixiang-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, an abandoned bedroom unused for eight years: bed and vanity covered with dusty white sheets, the vanity mirror turned to face the wall, faded floral wallpaper, thick dust on the floor, viewpoint in the middle of the room, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "xixiang-2",
+  "room": "西厢",
+  "view": "南窗下",
+  "file": "assets/panoramas/xixiang-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, an abandoned bedroom unused for eight years: bed and vanity covered with dusty white sheets, the vanity mirror turned to face the wall, faded floral wallpaper, thick dust on the floor, viewpoint under the south window, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "erlaoye-1",
+  "room": "二老爷旧房",
+  "view": "屋里",
+  "file": "assets/panoramas/erlaoye-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, old bedroom of a middle aged accountant: writing desk with an abacus and blank ledger paper, a wardrobe, a washstand with an enamel basin, viewpoint in the middle of the room, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "erlaoye-2",
+  "room": "二老爷旧房",
+  "view": "窗边",
+  "file": "assets/panoramas/erlaoye-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, old bedroom of a middle aged accountant: writing desk with an abacus and blank ledger paper, a wardrobe, a washstand with an enamel basin, viewpoint by the window, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "jingxing-1",
+  "room": "沈景行房",
+  "view": "屋里",
+  "file": "assets/panoramas/jingxing-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, a young man's room: bookshelf with foreign language books and sheet music, a gramophone with a stack of records, a desk with an unfinished letter, viewpoint in the middle of the room, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "kongkefang-1",
+  "room": "东头空客房",
+  "view": "门口",
+  "file": "assets/panoramas/kongkefang-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, an unused guest room used as storage: an old rattan chair, stacked camphor wood trunks, furniture under dusty sheets, chairs upside down on an old square table, a high south window sill with thick dust, viewpoint at the doorway, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "kongkefang-2",
+  "room": "东头空客房",
+  "view": "南窗下",
+  "file": "assets/panoramas/kongkefang-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, an unused guest room used as storage: an old rattan chair, stacked camphor wood trunks, furniture under dusty sheets, chairs upside down on an old square table, a high south window sill with thick dust, viewpoint under the south window, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "lutai-1",
+  "room": "露台",
+  "view": "西段",
+  "file": "assets/panoramas/lutai-1.webp",
+  "prompt": "360 equirectangular panorama, second floor balcony of an old 1930s Republic of China mansion in Qingpu near Shanghai, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, grey brick walls, bare winter trees, damp ground, natural soft shadows, photorealistic, seamless 360 view, a long second floor balcony terrace: dusty floor tiles, wooden railings overlooking the front courtyard, the French window and shuttered windows of three rooms along the wall, viewpoint at the west end, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "lutai-2",
+  "room": "露台",
+  "view": "落地窗外",
+  "file": "assets/panoramas/lutai-2.webp",
+  "prompt": "360 equirectangular panorama, second floor balcony of an old 1930s Republic of China mansion in Qingpu near Shanghai, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, grey brick walls, bare winter trees, damp ground, natural soft shadows, photorealistic, seamless 360 view, a long second floor balcony terrace: dusty floor tiles, wooden railings overlooking the front courtyard, the French window and shuttered windows of three rooms along the wall, viewpoint outside the study French window, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "shufang-1",
+  "room": "书房",
+  "view": "书桌前",
+  "file": "assets/panoramas/shufang-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, the study of a wealthy herbal medicine merchant: a large dark wooden desk with a man in a dark changshan slumped face down over it as if asleep, a brass letter opener, a white porcelain medicine bowl with brown residue, green banker's lamp, brush holder, tall bookshelves of medical books and old ledgers, a small rosewood box on top of the bookshelf, a curio shelf of medicine jars with one empty slot, a French window to the balcony slightly ajar, a closed south window, a broken wooden door bolt lying by the door, an armchair with a folded blanket, a wastepaper basket with ashes, viewpoint in front of the desk, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "shufang-2",
+  "room": "书房",
+  "view": "落地窗边",
+  "file": "assets/panoramas/shufang-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, the study of a wealthy herbal medicine merchant: a large dark wooden desk with a man in a dark changshan slumped face down over it as if asleep, a brass letter opener, a white porcelain medicine bowl with brown residue, green banker's lamp, brush holder, tall bookshelves of medical books and old ledgers, a small rosewood box on top of the bookshelf, a curio shelf of medicine jars with one empty slot, a French window to the balcony slightly ajar, a closed south window, a broken wooden door bolt lying by the door, an armchair with a folded blanket, a wastepaper basket with ashes, viewpoint beside the French window, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "woshi-1",
+  "room": "西头卧房（沈伯衡）",
+  "view": "屋里",
+  "file": "assets/panoramas/woshi-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, master bedroom: carved wooden bed with a folded quilt not slept in, bedside cabinet with an empty tea bowl, tall wardrobe, writing desk with a stack of envelopes, a south window, viewpoint in the middle of the room, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "woshi-2",
+  "room": "西头卧房（沈伯衡）",
+  "view": "南窗下",
+  "file": "assets/panoramas/woshi-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, master bedroom: carved wooden bed with a folded quilt not slept in, bedside cabinet with an empty tea bowl, tall wardrobe, writing desk with a stack of envelopes, a south window, viewpoint under the south window, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "zoulang-1",
+  "room": "二楼走廊",
+  "view": "书房门外",
+  "file": "assets/panoramas/zoulang-1.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, a long east-west upstairs corridor: worn wooden floor, a row of panelled doors on both sides, at the far west end a potted orchid and a soot-blackened kerosene lamp, staircase landing at the east end, viewpoint outside the study door, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ },
+ {
+  "id": "zoulang-2",
+  "room": "二楼走廊",
+  "view": "楼梯口",
+  "file": "assets/panoramas/zoulang-2.webp",
+  "prompt": "360 equirectangular panorama, interior of an old 1930s Republic of China mansion, overcast gloomy daylight, desaturated cold grey and muted dark wood tone, realistic Chinese period drama cinematography, aged wooden furniture, slightly peeling plaster walls, natural soft shadows, photorealistic, seamless 360 view, a long east-west upstairs corridor: worn wooden floor, a row of panelled doors on both sides, at the far west end a potted orchid and a soot-blackened kerosene lamp, staircase landing at the east end, viewpoint at the stair landing, 2:1 aspect ratio, camera at eye level 1.6 meters, level horizon, lifted shadows with visible detail, no crushed blacks, late winter 1934, damp air, no text, no watermark",
+  "negative": "fisheye seam, visible stitching seam, tilted horizon, cartoon, anime, illustration, 3d render, oversaturated, warm orange cast, modern furniture, electric appliances, plastic, text, watermark, logo, blurry, low resolution, gore, blood splatter"
+ }
+]

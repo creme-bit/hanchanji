@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js']) await load('3d/' + f + (/^(models|scene|textures|look)/.test(f) ? '?v=19' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=20' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -1951,7 +1951,7 @@ const V3 = {};
     self.refresh = () => { need = true; };
     self.info = (h) => { el.querySelector('.walk-i').innerHTML = h; };
     self.sub = (h) => { el.querySelector('.walk-t small').innerHTML = h; };
-    self.loc = () => loc; self._scene = () => cur; self._pos = () => pos.toArray();
+    self.loc = () => loc; self._scene = () => cur; self._renderer = () => renderer; self._pos = () => pos.toArray();
     self.go = (i) => go(i, true);
     self.turn = (d) => { yaw += d; need = true; };
     self.cam = (p, y, pt, fov) => { pos.set(p[0] * K, p[1], p[2] * K); yaw = y; pitch = pt; if (fov) { cam.fov = fov; cam.updateProjectionMatrix(); } need = true; };
@@ -1972,7 +1972,8 @@ const V3 = {};
     return self;
   }
   let WALK = null;
-  V3.walk = () => WALK || (WALK = makeWalk());
+  V3.walk3d = () => WALK || (WALK = makeWalk());   // 旧的几何体漫游：只给烘焙全景图用
+  V3._data = { VP, DOORS, SP, HOT, rname, K, F2, EYE };
   V3.canWalk = l => !!VP[l];
   V3.label = l => rname(l);
 
