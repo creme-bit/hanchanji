@@ -55,6 +55,7 @@ const M = {};
     M.box(g, w - 0.4, 0.3, 0.15, 0, h - 0.6, d / 2 - 0.25, WOOD_D); M.box(g, w - 0.4, 0.3, 0.15, 0, h - 0.6, -d / 2 + 0.25, WOOD_D);
     return g;
   };
+  M.dining = (p, x, z, w, d, h = 2.8, ry = 0, top = WOOD) => M.table(p, x, z, w, d, h, ry, top);
   M.desk = (p, x, z, w, d, h = 2.6, ry = 0, top = WOOD) => M.table(p, x, z, w, d, h, ry, top);
   M.chair = (p, x, z, ry = 0, c = WOOD) => {
     const g = M.group(p, x, 0, z, ry);

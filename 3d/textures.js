@@ -99,7 +99,17 @@ const TX = {};
     g.fillStyle = '#9b4a35'; g.beginPath(); g.ellipse(w / 2, h / 2, w * 0.26, h * 0.22, 0, 0, 7); g.fill();
     g.strokeStyle = '#d8b77a'; g.lineWidth = 4; g.stroke();
     g.fillStyle = '#d8b77a'; g.beginPath(); g.ellipse(w / 2, h / 2, w * 0.08, h * 0.06, 0, 0, 7); g.fill();
-    for (let i = 0; i < 4; i++) { g.fillStyle = '#2b3b52'; g.beginPath(); g.arc(i < 2 ? 80 : w - 80, i % 2 ? 80 : h - 80, 22, 0, 7); g.fill(); }
+    // 角花：四角各一块扇形角云（天津地毯式）
+    [[46, 46, 0], [w - 46, 46, Math.PI / 2], [w - 46, h - 46, Math.PI], [46, h - 46, -Math.PI / 2]].forEach(([x, y, r]) => { g.save(); g.translate(x, y); g.rotate(r);
+      g.fillStyle = border; g.beginPath(); g.moveTo(0, 0); g.lineTo(90, 0); g.quadraticCurveTo(70, 30, 40, 40); g.quadraticCurveTo(30, 70, 0, 90); g.closePath(); g.fill();
+      g.strokeStyle = '#c9a25e'; g.lineWidth = 2; g.stroke(); g.restore(); });
+    // 回纹边
+    g.strokeStyle = '#c9a25e'; g.lineWidth = 2; for (let x = 36; x < w - 36; x += 16) { g.strokeRect(x, 22, 10, 6); g.strokeRect(x, h - 28, 10, 6); } for (let y = 36; y < h - 36; y += 16) { g.strokeRect(22, y, 6, 10); g.strokeRect(w - 28, y, 6, 10); }
+    // 地子上散点小团花
+    for (let i = 0; i < 26; i++) { const x = 70 + Math.random() * (w - 140), y = 70 + Math.random() * (h - 140); if (((x - w / 2) / (w * 0.3)) ** 2 + ((y - h / 2) / (h * 0.26)) ** 2 < 1) continue;
+      g.fillStyle = 'rgba(216,183,122,.45)'; for (let k = 0; k < 5; k++) { const a = k * 1.2566; g.beginPath(); g.ellipse(x + Math.cos(a) * 5, y + Math.sin(a) * 5, 4, 2.5, a, 0, 7); g.fill(); } }
+    // 中心团花瓣
+    g.fillStyle = 'rgba(216,183,122,.6)'; for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; g.beginPath(); g.ellipse(w / 2 + Math.cos(a) * w * 0.15, h / 2 + Math.sin(a) * h * 0.12, 14, 7, a, 0, 7); g.fill(); }
     noise(g, w, h, 6000, 0.12);
   });
   TX.roofTile = () => cv(256, 256, (g, w, h) => {

@@ -67,15 +67,12 @@ const SCENE = {};
     M.door(s, 70, 30, 6, 0.8); M.door(s, 34, 38, 5.6, -0.7); M.door(s, 3, 38, 5.6, -0.7); M.door(s, 86, 38, 5.4, -0.7); M.door(s, 126.2, 38, 5.6, -0.7);
     M.door(s, 52.5, 90, 4.5, 1.0, '#5a2e1e'); const dr = M.door(s, 61.5, 90, 4.5, Math.PI - 1.0, '#5a2e1e');
     // 前厅
-    M.carpet(s, 44, 43, 70, 85, '#6b2a24', '#2b3b52');
-    M.table(s, 57, 63.5, 9, 33, 2.8, 0, '#6b4128');
-    M.armchair(s, 57, 45.2, 0);
-    [50, 57, 64, 71, 78].forEach(z => M.chair(s, 50.6, z, Math.PI / 2));
-    [51.5, 60.5, 69.5, 78.5].forEach(z => M.chair(s, 63.4, z, -Math.PI / 2));
-    [52, 58, 64, 70, 76].forEach(z => { M.cyl(s, 0.7, 0.5, 0.2, 57, 2.8, z, '#efeadc'); });
-    M.lamp(s, 57, 2.8, 56); M.lamp(s, 57, 2.8, 70);
+    M.carpet(s, 45, 45, 69, 80, '#6b2a24', '#2b3b52');
+    M.dining(s, 57, 61, 6.4, 19, 2.8, 0, '#6b4128');
+    M.armchair(s, 57, 48.6, 0);
+    [54.5, 59.5, 64.5, 69.5].forEach((z, i) => { M.chair(s, 52.6, z, Math.PI / 2); M.chair(s, 61.4, z, -Math.PI / 2); });
+    M.chair(s, 57, 73.4, Math.PI);
     M.table(s, 57, 40.5, 20, 2.6, 3.2, 0, '#3f2516');
-    M.cyl(s, 0.7, 0.5, 2.2, 50, 3.2, 40.5, '#2f5a68'); M.cyl(s, 0.7, 0.5, 2.2, 64, 3.2, 40.5, '#2f5a68');
     M.plant(s, 33, 41, 1.3); M.plant(s, 79, 41, 1.3); M.plant(s, 33, 86, 1.3); M.plant(s, 79, 86, 1.3);
     M.armchair(s, 34.2, 64, Math.PI / 2); M.armchair(s, 34.2, 70, Math.PI / 2); M.table(s, 33.6, 67, 2.4, 2, 2.4);
     // 西厢
