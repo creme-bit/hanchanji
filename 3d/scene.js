@@ -164,7 +164,7 @@ const SCENE = {};
     M.screen(g, 19, 73, 3, 3, Math.PI / 2);
     // 书房
     M.carpet(g, 60, 70, 93, 87, '#6b2a24', '#2b3b52');
-    M.duobao(g, 52.7, 75.5, 23, 3.8, 7.5, -Math.PI / 2, 13);
+    M.duobao(g, 52.7, 75.5, 23, 3.8, 7.5, Math.PI / 2, 13);
     M.bookcase(g, 80, 62.1, 20, 2.6, 7);
     M.ironBox(g, 79.3, 7, 62.1);
     M.table(g, 77, 77.5, 18, 7, 2.6, 0, '#4a2e1c');

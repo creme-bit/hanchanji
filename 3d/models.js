@@ -3,6 +3,7 @@ const M = {};
 (function () {
   const mats = {};
   function mat(color, opt = {}) {
+    if (M.matHook) { const r = M.matHook(color, opt); if (r) return r; }
     const key = color + JSON.stringify(opt);
     if (!mats[key]) mats[key] = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.85, metalness: 0 }, opt));
     return mats[key];
