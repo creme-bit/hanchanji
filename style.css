@@ -192,3 +192,37 @@ button.chip{min-height:36px}
 .ht{border-collapse:collapse;width:100%;font-size:14px}.ht td,.ht th{border:1px solid var(--line);padding:6px}
 .sheet .row2 .btn{text-align:center}
 .sheet .row{min-height:48px}
+/* ---- 站在房间里 ---- */
+#stage .walk{position:absolute;z-index:auto}
+#stage .walk-tip{bottom:calc(132px + env(safe-area-inset-bottom))}
+#stage[data-walk="1"]::after{content:"";position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(#0000,#000a);pointer-events:none}
+body.walking .mapbar{bottom:calc(84px + env(safe-area-inset-bottom))}
+/* ---- 导航：公馆居中 ---- */
+.nav{overflow:visible}
+.nav button.mid{color:#f0d9a8}
+.nav button.mid b{width:58px;height:58px;margin:-26px auto 2px;border-radius:50%;display:grid;place-items:center;font-size:26px;background:radial-gradient(circle at 35% 30%,#c7553f,#7a1f16);color:#f6ead6;border:2px solid #d9b25a;box-shadow:0 4px 18px #000c,0 0 0 4px #0e0b09}
+.nav button.mid.on b{box-shadow:0 0 18px #d9b25a88,0 0 0 4px #0e0b09}
+.nav em{display:grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;font-style:normal;font-size:11px;color:#fff;top:6px;right:calc(50% - 26px);width:auto}
+/* ---- 私聊 ---- */
+.convo{cursor:pointer}
+.convo .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#2a2018;border:1px solid #5a4a3a;color:#f0d9a8;font-weight:700;flex:none}
+.badge{font-style:normal;background:#d9453a;color:#fff;border-radius:10px;padding:0 7px;font-size:12px}
+.chat-h{position:sticky;top:calc(118px + env(safe-area-inset-top));z-index:4;display:flex;align-items:center;gap:10px;padding:8px 0;background:var(--bg)}
+.chat-h b{font-size:18px}.chat-h .fine{margin-left:auto;font-size:12px}
+.chat-h .pill{min-height:36px;padding:2px 12px}
+.chat{display:flex;flex-direction:column;gap:10px;padding:10px 0 150px}
+.msg-row{display:flex;flex-direction:column;align-items:flex-start;max-width:82%}
+.msg-row.me{align-self:flex-end;align-items:flex-end}
+.msg-row .nm{font-size:12px;color:var(--dim);margin:0 6px 2px}
+.bub{background:#2a2018;border:1px solid #4a3a2c;border-radius:4px 14px 14px 14px;padding:8px 12px}
+.msg-row.me .bub{background:#5a2a1e;border-color:#8a3a2a;border-radius:14px 4px 14px 14px}
+.bub p{margin:0;word-break:break-word}
+.cchip{display:flex;gap:10px;align-items:center;background:linear-gradient(#efe4cb,#dccaa3);color:#2a1d14;border-radius:3px;padding:8px 12px;margin:2px 0 4px;cursor:pointer;min-width:180px;box-shadow:inset 0 0 0 1px #8a6a4266}
+.cchip i{font-style:normal;width:30px;height:30px;border:2px solid #b23a2a;color:#b23a2a;border-radius:4px;display:grid;place-items:center;font-weight:900;transform:rotate(6deg);flex:none}
+.cchip span{font-size:12px;color:#7a5f44;line-height:1.3}.cchip b{display:block;font-size:16px;color:#2a1d14}
+.composer{position:fixed;left:0;right:0;bottom:calc(66px + env(safe-area-inset-bottom));padding-left:12px!important;z-index:7;display:flex;gap:8px;padding:8px 12px;background:#0e0b09f2;border-top:1px solid var(--line)}
+.composer input{flex:1;min-height:44px;border:1px solid #5a4a3a;background:#0006;border-radius:22px;padding:0 14px;font-size:16px}
+.composer .pill{min-height:44px;padding:0 14px}.composer .send{background:var(--red);border-color:var(--red);color:#fff}
+body:has(.composer) .nav button.mid b{width:44px;height:44px;margin:-8px auto 2px;font-size:20px}
+.composer{padding-bottom:12px}
+.walk-t small{display:block;margin-top:2px}

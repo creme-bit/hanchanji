@@ -11,6 +11,7 @@ const V3 = {};
   // 可搜的地方：box = [x0,z0,x1,z1]，at = 标签位置
   const HOT = {
     1: [
+      { loc: '前厅', sub: '众人在此', box: [30, 38, 82, 90], at: [57, 6, 70] },
       { loc: '后院', box: [0, 0, 150, 30], at: [86, 3, 16] },
       { loc: '厨房', box: [124, 38, 150, 90], at: [137, 6, 60] },
       { loc: '一楼东厢（顾雪芝）', name: '东厢', sub: '顾雪芝住', box: [82, 64, 106, 90], at: [94, 6, 77] },
@@ -26,7 +27,7 @@ const V3 = {};
     ],
   };
   const PLAIN = {
-    1: [['柴房', [13, 5, 8]], ['管家房', [36, 5, 10]], ['井', [64, 3, 11]], ['后门', [0, 7, 21.5]], ['西厢', [15, 4, 55]], ['前厅', [57, 5, 64]], ['客厅', [94, 4, 50]],
+    1: [['柴房', [13, 5, 8]], ['管家房', [36, 5, 10]], ['井', [64, 3, 11]], ['后门', [0, 7, 21.5]], ['西厢', [15, 4, 55]], ['客厅', [94, 4, 50]],
       ['楼梯', [115, 7, 46]], ['下人房', [115, 4, 80]], ['大门', [57, 6, 90]], ['院门', [57, 9, 115]], ['洗手间', [144, 4, 34]]],
     2: [['沈景行房', [25, F2 + 5, 40]], ['二老爷旧房', [79, F2 + 5, 40]], ['杂物间', [137, F2 + 5, 40]], ['楼梯', [115, F2 + 1, 41]], ['落地窗', [92.5, F2 + 8, 90]]],
   };
@@ -209,7 +210,9 @@ const V3 = {};
       pick(hit ? hit.object.userData : null);
     }
     let auto = false;
+    let modeSet = null;
     self.home = (on) => {
+      if (modeSet === on) return; modeSet = on;
       auto = on; el.classList.toggle('home', on);
       if (on) { setFloor(1); view.tx = 57; view.tz = 62; view.el = 0.78; view.az = 0.5; fit(); view.ppu = Math.min(W / 78, H / 70); }
       else { self.reset(); }
@@ -604,6 +607,7 @@ const V3 = {};
   }
   // 机位：look = 初始朝向点
   const VP = {
+    '前厅': [{ f: 1, at: [45, 85], look: [60, 50], n: '大门口' }, { f: 1, at: [70, 47], look: [50, 72], n: '主位边' }],
     '书房': [{ f: 2, at: [76, 67.6], look: [76.5, 80], n: '书桌前' }, { f: 2, at: [93, 74], look: [72, 78], n: '落地窗边' }, { f: 2, at: [59, 65], look: [53, 76], n: '门口' }],
     '二楼走廊': [{ f: 2, at: [14, 56], look: [60, 56], n: '西头' }, { f: 2, at: [62, 56], look: [59, 60], n: '书房门外' }, { f: 2, at: [128, 56], look: [60, 56], n: '东头' }],
     '西头卧房（沈伯衡）': [{ f: 2, at: [40, 71], look: [18, 70], n: '屋里' }],
@@ -617,6 +621,14 @@ const V3 = {};
   };
   // 可查看的地方：r1 = 第一轮可得，r2 = 第二轮对应卡，t = 没有卡时的描述
   const SP = {
+    '前厅': [
+      { n: '长桌', at: [57, 3.6, 66], t: '晚宴撤了一半，碗碟还摆着，十个座位空了一个。' },
+      { n: '主位', at: [57, 4.6, 45.2], t: '六点四十分，沈伯衡就坐在这里，说子时要当众开铁盒。说完他上了楼。' },
+      { n: '匾额', at: [57, 9.6, 39], t: '「沈萬春堂」，老太爷的字。' },
+      { n: '落地钟', at: [79.5, 6.4, 86], t: '钟走得很准。' },
+      { n: '大门', at: [57, 4.5, 89.6], t: '大门外是前院，再往外是院门。' },
+      { n: '客厅', at: [82, 4.5, 46.8], t: '往东是客厅，留声机还开着盖。' },
+    ],
     '书房': [
       { n: '尸体', at: [75.2, 16.9, 80.4], r1: ['R1-01', 'R1-02', 'R1-07'], r2: ['R2-01'], t: '他伏在桌上，已经凉了。' },
       { n: '拆信刀', at: [78.6, 15.3, 79.6], r1: ['R1-02'], r2: ['R2-02'], t: '黄铜刀柄露在外面，刀柄朝上。' },
@@ -691,7 +703,7 @@ const V3 = {};
 
   function makeWalk() {
     const el = document.createElement('div'); el.className = 'walk';
-    el.innerHTML = '<div class="walk-c"></div><div class="walk-l"></div><div class="walk-top"><button class="pill" data-w="back">← 回地图</button><div class="walk-t"><b></b><small></small></div><div class="walk-i"></div></div><div class="walk-tip">拖动环视 · 点亮处可以查看</div><div class="walk-wait">正在点灯……</div>';
+    el.innerHTML = '<div class="walk-c"></div><div class="walk-l"></div><div class="walk-top"><button class="pill" data-w="back">全图</button><div class="walk-t"><b></b><small></small></div><div class="walk-i"></div></div><div class="walk-tip">拖动环视 · 点亮处可以查看</div><div class="walk-wait">正在点灯……</div>';
     const cbox = el.querySelector('.walk-c'), lbox = el.querySelector('.walk-l'), wait = el.querySelector('.walk-wait');
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(1.75, window.devicePixelRatio || 1));
@@ -750,6 +762,7 @@ const V3 = {};
     self.attach = (host) => { host.appendChild(el); fit(); if (!raf) raf = requestAnimationFrame(frame); need = true; };
     self.refresh = () => { need = true; };
     self.info = (h) => { el.querySelector('.walk-i').innerHTML = h; };
+    self.sub = (h) => { el.querySelector('.walk-t small').innerHTML = h; };
     self.loc = () => loc;
     self.go = (i) => go(i, true);
     self.turn = (d) => { yaw += d; need = true; };
@@ -772,6 +785,7 @@ const V3 = {};
   let WALK = null;
   V3.walk = () => WALK || (WALK = makeWalk());
   V3.canWalk = l => !!VP[l];
+  V3.label = l => { for (const f of [1, 2]) { const h = HOT[f].find(x => x.loc === l); if (h) return h.name || h.loc; } return l; };
 
   /* ------------------------------------------------------------ 铜锁 */
   function envMap(renderer) {

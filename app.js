@@ -19,8 +19,8 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const $=id=>document.getElementById(id);
 const app=$('app');
 let D=null,HD=null;
-const st={role:S.get('role',null),pw:S.get('pw',null),codes:S.get('codes',[]),host:S.get('host',null),tab:'map',tries:S.get('tries',0),puzzle:S.get('puzzle',null),
- tasted:S.get('tasted',{}),found:S.get('found',[]),seen:S.get('seen',0),htab:'run',room:S.get('room',''),sv:null,expect:0};
+const st={role:S.get('role',null),pw:S.get('pw',null),codes:S.get('codes',[]),host:S.get('host',null),tab:'world',tries:S.get('tries',0),puzzle:S.get('puzzle',null),
+ tasted:S.get('tasted',{}),found:S.get('found',[]),read:S.get('read',{}),gid:S.get('gid',null),place:S.get('place','前厅'),chat:null,draft:'',htab:'run',room:S.get('room',''),sv:null,expect:0};
 const cache={},acache={};
 const role=()=>D.roles.find(r=>r.id===st.role);
 const roleName=id=>(D.roles.find(r=>r.id===id)||{}).name||'';
@@ -57,7 +57,7 @@ const R1REL=[['R1-10','开场时说过各人门下都有一封信，把信的样
 /* ======================= 同步：主持人 ======================= */
 const OPTS=window.PEER_OPTS||{};
 const H={peer:null,conns:new Map(),s:S.get('hs',null)};
-function hsInit(){if(H.s&&H.s.games)return;H.s=Object.assign({phase:0,applied:[],pub:[],ap:{},ledger:{},persons:{},votes:{},log:[]},H.s||{},{games:{},r1rel:[],shares:[],solved:{}});hsSave()}
+function hsInit(){if(H.s&&H.s.msgs&&H.s.gid)return;H.s=Object.assign({phase:0,applied:[],pub:[],ap:{},ledger:{},persons:{},votes:{},log:[],games:{},r1rel:[],solved:{}},H.s||{},{msgs:[],gid:Math.random().toString(36).slice(2,10)});hsSave()}
 function hsSave(){S.set('hs',H.s)}
 function hostStart(){hsInit();if(H.peer)return;
  if(!st.room){st.room=String(1000+Math.floor(Math.random()*9000));S.set('room',st.room)}
@@ -71,10 +71,9 @@ function hostStart(){hsInit();if(H.peer)return;
 function connOf(role){return [...H.conns.values()].filter(x=>x.role===role)}
 function stateFor(role){const s=H.s,ph=PH[s.phase];
  const mine=Object.entries(s.ledger).filter(([,r])=>r===role).map(([id])=>HD.codes[id]);
- const inbox=s.shares.filter(x=>x.from!==role&&(x.to==='all'||x.to.includes(role))).map(x=>({from:x.from,id:x.id,note:x.note,code:HD.codes[x.id],t:x.t}));
- const sent=s.shares.filter(x=>x.from===role).map(x=>({to:x.to,id:x.id,note:x.note,t:x.t}));
+ const msgs=s.msgs.filter(m=>m.to==='all'||m.to===role||m.from===role).map(m=>Object.assign({},m,m.card&&m.from!==role?{code:HD.codes[m.card]}:{}));
  return {t:'state',phase:s.phase,pub:s.pub,mine,ap:s.ap[role]??0,search:!!ph.search,vote:!!ph.vote,myVote:s.votes[role]||null,tally:ph.reveal?tallyVotes():null,
-  taken:Object.keys(s.ledger),persons:Object.keys(s.persons),games:s.games,r1rel:s.r1rel,inbox,sent}}
+  taken:Object.keys(s.ledger),persons:Object.keys(s.persons),games:s.games,r1rel:s.r1rel,msgs,gid:s.gid}}
 function push(role){connOf(role).forEach(x=>{try{x.c.send(stateFor(role))}catch(e){}})}
 function pushAll(){hsSave();[...H.conns.values()].forEach(x=>{if(x.role)try{x.c.send(stateFor(x.role))}catch(e){}});render()}
 const DEEP={'R2-10':'R2-09'};
@@ -94,11 +93,11 @@ function hostMsg(c,d){const x=H.conns.get(c.peer);if(!x||!d||typeof d!=='object'
   s.ap[who]-=1;
   if(!next){s.log.unshift(`${roleName(who)} 搜了 ${d.loc}，没东西了`);tell(c,'这里已经有人来过了，什么也没找到');pushAll();return}
   s.ledger[next.id]=who;s.log.unshift(`${roleName(who)} 搜 ${d.loc} → ${next.id} ${HD.titles[next.id]}`);pushAll();return}
- if(d.t==='share'&&cardById(d.id)&&HD.codes[d.id]){const to=d.to==='all'?'all':(Array.isArray(d.to)?d.to.filter(r=>D.roles.some(q=>q.id===r)&&r!==who):[]);
-  if(to!=='all'&&!to.length)return;s.shares.push({from:who,to,id:d.id,note:String(d.note||'').slice(0,80),t:Date.now()});
-  s.log.unshift(`${roleName(who)} 把 ${d.id} ${HD.titles[d.id]} 给 ${to==='all'?'所有人':to.map(roleName).join('、')} 看了`);
-  [...H.conns.values()].forEach(y=>{if(y.role&&y.role!==who&&(to==='all'||to.includes(y.role)))tell(y.c,`${roleName(who)} 给你看了一张线索`)});
-  tell(c,'已经给对方看了');pushAll();return}
+ if(d.t==='chat'){const to=d.to==='all'?'all':(D.roles.some(q=>q.id===d.to)&&d.to!==who?d.to:null);if(!to)return;
+  const card=d.card&&cardById(d.card)&&HD.codes[d.card]?d.card:null,text=String(d.text||'').slice(0,300).trim();if(!card&&!text)return;
+  s.msgs.push({i:s.msgs.length+1,from:who,to,text,card,t:Date.now()});
+  if(card)s.log.unshift(`${roleName(who)} 把 ${card} ${HD.titles[card]} 给 ${to==='all'?'所有人':roleName(to)} 看了`);
+  pushAll();return}
  if(d.t==='solved'&&GAMES.some(g=>g.k===d.g)){const l=s.solved[d.g]=s.solved[d.g]||[];if(!l.includes(who)){l.push(who);s.log.unshift(`${roleName(who)} 解开了「${GAMES.find(g=>g.k===d.g).n}」`);pushAll()}return}
  if(d.t==='vote'&&ph.vote){s.votes[who]={a:d.a,b:d.b,c:d.c};s.log.unshift(`${roleName(who)} 投了票`);tell(c,'票已投出，开票前还能改');pushAll()}}
 function tell(c,m){try{c.send({t:'msg',m})}catch(e){}}
@@ -125,35 +124,45 @@ function retry(){clearTimeout(P.timer);P.timer=setTimeout(()=>{if(P.peer&&!P.pee
 function leaveRoom(){try{P.peer&&P.peer.destroy()}catch(e){}P.peer=null;P.on=false}
 function onHost(d){if(!d||typeof d!=='object')return;
  if(d.t==='msg'){toast(String(d.m));return}
- if(d.t==='state'){const before=st.sv?st.sv.phase:null,had=new Set(D.cards.filter(c=>card(c)).map(c=>c.id));st.sv=d;let a3=false;
-  [...(d.pub||[]),...(d.mine||[]),...(d.inbox||[]).map(x=>x.code)].forEach(code=>{if(code&&!st.codes.includes(String(code))){const r=tryCode(code);a3=a3||r.a3}});
+ if(d.t==='state'){
+  if(d.gid&&st.gid&&d.gid!==st.gid)wipe();if(d.gid&&d.gid!==st.gid){st.gid=d.gid;S.set('gid',d.gid)}
+  const oldN=st.sv?(st.sv.msgs||[]).length:null;
+  const before=st.sv?st.sv.phase:null,had=new Set(D.cards.filter(c=>card(c)).map(c=>c.id));st.sv=d;let a3=false;
+  if(oldN!==null)(d.msgs||[]).slice(oldN).forEach(m=>{if(m.from!==st.role&&!(st.tab==='msg'&&st.chat===ckey(m)))toast(`${roleName(m.from)}${m.to==='all'?'（对所有人）':''}：${m.text||'给你看了一张线索'}`)});
+  [...(d.pub||[]),...(d.mine||[]),...(d.msgs||[]).map(x=>x.code)].forEach(code=>{if(code&&!st.codes.includes(String(code))){const r=tryCode(code);a3=a3||r.a3}});
   const fresh=D.cards.filter(c=>card(c)&&!had.has(c.id)&&visible(c)&&c.round!==1);
   if(before!==null&&before!==d.phase)toast('进入：'+PH[d.phase].n);
   if(fresh.length)setTimeout(()=>toast(`新到 ${fresh.length} 张线索`+(a3?'，第三幕已解封':'')),before!==d.phase?1600:0);else if(a3)toast('第三幕已解封');
   if(st.expect&&fresh.length){st.expect=0;render();showCard(fresh[fresh.length-1].id);return}
   if((d.vote||d.tally)&&before!==d.phase)st.tab='vote';
   render()}}
+function wipe(){st.codes=[];st.found=[];st.tries=0;st.puzzle=null;st.tasted={};st.read={};st.chat=null;st.place='前厅';
+ ['codes','found','tries','puzzle','tasted','read','pz2','place'].forEach(k=>{try{localStorage.removeItem('hcj:'+k)}catch(e){}});
+ Object.keys(cache).forEach(k=>delete cache[k]);Object.keys(acache).forEach(k=>delete acache[k]);PZ=null;PZfit=null;
+ if(LOCK){try{LOCK.el.remove()}catch(e){}LOCK=null}setTimeout(()=>toast('主持人重新开了一局，你的进度已清空'),300)}
 function send(o){if(P.conn&&P.on){P.conn.send(o);return true}toast('还没连上主持人');return false}
 
 /* ======================= 舞台：3D 地图 ======================= */
 const stage=$('stage');let MAP=null,WALK=null,LOCK=null;
-function useStage(mode){if(!G3){stage.style.display='none';return}
- if(!mode){stage.style.display='none';return}
- stage.style.display='';stage.dataset.mode=mode;
- V3.ready().then(()=>{if(!MAP){MAP=V3.map();MAP.state=locState;MAP.onPick=pickLoc}
-  if(MAP.el.parentNode!==stage){stage.innerHTML='';const ph=document.createElement('div');stage.appendChild(ph);MAP.attach(ph)}
-  MAP.home(mode==='home');MAP.refresh()}).catch(()=>{stage.style.display='none'})}
+function useStage(mode){if(!G3||!mode){stage.style.display='none';return}
+ stage.style.display='';stage.dataset.mode=mode;const walk=mode==='play'&&st.place!=='map';stage.dataset.walk=walk?1:'';
+ V3.ready().then(()=>{
+  if(!walk){if(!MAP){MAP=V3.map();MAP.state=locState;MAP.onPick=pickLoc}
+   if(MAP.el.parentNode!==stage){stage.innerHTML='';const ph=document.createElement('div');stage.appendChild(ph);MAP.attach(ph)}
+   MAP.home(mode==='home');MAP.refresh();return}
+  if(!WALK){WALK=V3.walk();WALK.state=spotState;WALK.onSpot=spotTap;WALK.onBack=()=>{st.place='map';S.set('place','map');render()}}
+  if(WALK.el.parentNode!==stage){stage.innerHTML='';WALK.attach(stage)}
+  if(WALK.loc()!==st.place)WALK.enter(st.place,V3.label(st.place),'');walkInfo()}).catch(()=>{stage.style.display='none'})}
 function locLeft(loc){const sv=st.sv;return D.cards.filter(c=>c.round===2&&!c.public&&c.loc===loc&&!(sv&&sv.taken.includes(c.id))).length}
 function locState(loc){const sv=st.sv;if(!P.on||!sv)return '';
  if(sv.phase===EXPLORE)return loc==='书房'?'look':'';
  if(!sv.search)return '';if(!locLeft(loc))return 'done';return sv.ap>=1?'can':''}
-function pickLoc(loc,name){if(G3&&V3.canWalk(loc))return enterRoom(loc,name);
+function pickLoc(loc,name){if(G3&&V3.canWalk(loc)){st.place=loc;S.set('place',loc);render();return}
  const sv=st.sv,left=locLeft(loc);let h=`<h3>${esc(name)}</h3>`;const can=P.on&&sv&&sv.search&&left&&sv.ap>=1;
  h+=can?`<p>搜这里花 1 点行动点，你还剩 ${sv.ap} 点。</p>`:'<p class="fine">现在不能搜这里。</p>';
  sheet(h+`<div class="row2"><button class="btn" data-sheet="x">${can?'算了':'知道了'}</button>${can?'<button class="btn red" data-sheet="go">搜这里</button>':''}</div>`,k=>{if(k==='go'&&send({t:'search',loc}))st.expect=1})}
-function walkInfo(){if(!WALK)return;const sv=st.sv;WALK.info(sv&&sv.search?`行动点 ${sv.ap}`:(sv&&sv.phase===EXPLORE&&WALK.loc()==='书房'?'勘查现场':''));WALK.refresh()}
-function enterRoom(loc,name){V3.ready().then(()=>{if(!WALK){WALK=V3.walk();WALK.state=spotState;WALK.onSpot=spotTap;WALK.onBack=()=>{WALK.el.remove();MAP&&MAP.clear();render()}}
- if(!WALK.el.isConnected)WALK.attach(document.body);WALK.enter(loc,name,loc!==name?loc:'');walkInfo()})}
+function walkInfo(){if(!WALK)return;const sv=st.sv;WALK.info(sv&&sv.search?`行动点 ${sv.ap}`:(sv&&sv.phase===EXPLORE&&WALK.loc()==='书房'?'勘查现场':''));
+ WALK.sub(`<span class="dot ${P.on?'on':''}"></span>${sv?esc(PH[sv.phase].n):(P.on?'已连上主持人':'未连上主持人')}`);WALK.refresh()}
 function spotState(loc,sp){const sv=st.sv;if(!sv)return '';
  if(sv.phase===EXPLORE&&loc==='书房'&&sp.r1)return sp.r1.every(id=>st.found.includes(id))?'done':'r1';
  if(sv.search&&sp.r2)return sp.r2.some(id=>!sv.taken.includes(id))?'can':'done';return ''}
@@ -187,33 +196,39 @@ function login(rid){useStage('home');const r=D.roles.find(x=>x.id===rid);app.inn
 <p class="fine">房间号（主持人屏幕上那四位数，没有可以先空着）</p><div class="code"><input id="rm" inputmode="numeric" autocomplete="off" placeholder="房间号" value="${esc(st.room||'')}"></div>
 <button class="btn red" id="pwgo">进入</button><div class="msg" id="pwm"></div></div>`;
  const go=()=>{const v=$('pw').value.trim();if(!dec(r.a12,v)){$('pwm').textContent='密码不对';return}
-  st.role=rid;st.pw=v;S.set('role',rid);S.set('pw',v);st.room=$('rm').value.trim();S.set('room',st.room);st.tab='book';view='player';joinRoom();render()};
+  st.role=rid;st.pw=v;S.set('role',rid);S.set('pw',v);st.room=$('rm').value.trim();S.set('room',st.room);st.tab='world';view='player';joinRoom();render()};
  $('pwgo').onclick=go}
 
 /* ======================= 页面：玩家 ======================= */
 function phaseBar(){const sv=st.sv;return `<div class="phase"><span><span class="dot ${P.on?'on':''}"></span>${P.on?'已连上主持人':(st.room?'正在连接房间 '+esc(st.room):'未加入房间')}</span>${sv?`<b>${esc(PH[sv.phase].n)}</b>`:''}</div>`}
+function ckey(m){return m.to==='all'?'all':(m.from===st.role?m.to:m.from)}
+function unreadOf(k){const ms=((st.sv&&st.sv.msgs)||[]).filter(m=>ckey(m)===k&&m.from!==st.role);return Math.max(0,ms.length-(st.read[k]||0))}
+function unreadAll(){return ['all',...D.roles.map(r=>r.id)].reduce((n,k)=>n+(k===st.role?0:unreadOf(k)),0)}
 function player(){const r=role(),sv=st.sv;
- const tabs=[['map','图','公馆'],['book','本','本子'],['clue','线','线索'],['game','机','机关'],['msg','信','交流']];
+ const tabs=[['book','本','本子'],['clue','线','线索'],['world','館','公馆'],['game','机','机关'],['msg','信','交流']];
  if(sv&&(sv.vote||sv.tally))tabs.push(['vote','票','投票']);
- if(!tabs.some(t=>t[0]===st.tab))st.tab='map';
- const unread=Math.max(0,((sv&&sv.inbox)||[]).length-st.seen);
- let body='',onMap=st.tab==='map'&&G3;
- if(st.tab==='map')body=G3?mapOverlay():mapFallback();
+ if(!tabs.some(t=>t[0]===st.tab))st.tab='world';
+ const world=st.tab==='world'&&G3,walking=world&&st.place!=='map';
+ let body='';
+ if(st.tab==='world')body=G3?mapOverlay(walking):mapFallback();
  if(st.tab==='book'){const a=dec(r.a12,st.pw),b=act3();body=`<div class="book">${a}</div>${b?`<div class="book">${b}</div>`:`<div class="lock">第三幕还封着<br><span class="fine">子时铁盒打开时会自动解封</span></div>`}`}
  if(st.tab==='clue')body=clueList();
  if(st.tab==='game')body=games();
- if(st.tab==='msg'){body=msgView();st.seen=((sv&&sv.inbox)||[]).length;S.set('seen',st.seen)}
+ if(st.tab==='msg')body=st.chat?chatView():msgList();
  if(st.tab==='vote')body=voteView();
- useStage(onMap?'play':null);
- document.body.classList.toggle('onmap',onMap);
- app.innerHTML=`<div class="top ${onMap?'float':''}"><div class="who">${esc(r.name)}<small>${esc(r.ident)}</small></div><button class="pill" data-go="logout">换人</button></div>${phaseBar()}<div class="wrap ${onMap?'float':''}">${body}</div>
- <nav class="nav" style="grid-template-columns:repeat(${tabs.length},1fr)">${tabs.map(([k,i,t])=>`<button class="${st.tab===k?'on':''}" data-tab="${k}"><b>${i}</b>${t}${k==='msg'&&unread?'<em></em>':''}</button>`).join('')}</nav>`;
- if(st.tab==='game')bindGames();if(st.tab==='vote'||st.tab==='map')bindAct();
- if(WALK&&WALK.el.isConnected)walkInfo()}
-function mapOverlay(){const sv=st.sv;let h='<div class="mapbar">';
- if(sv&&sv.phase===EXPLORE)h+='<span class="chip gold">勘查现场：进书房看看</span>';
- if(sv&&sv.search)h+=`<span class="chip gold">行动点 ${sv.ap}</span><button class="chip" id="persons">搜身</button><button class="chip" id="loclist">地点列表</button>`;
- if(!sv||(!sv.search&&sv.phase!==EXPLORE))h+='<span class="chip">点房间名可以走进去看</span>';
+ useStage(world?'play':null);
+ document.body.classList.toggle('onmap',world);document.body.classList.toggle('walking',walking);
+ const inp=$('chatin');if(inp)st.draft=inp.value;const focus=document.activeElement&&document.activeElement.id==='chatin';
+ const un=unreadAll();
+ app.innerHTML=(walking?'':`<div class="top ${world?'float':''}"><div class="who">${esc(r.name)}<small>${esc(r.ident)}</small></div><button class="pill" data-go="logout">换人</button></div>${phaseBar()}`)+`<div class="wrap ${world?'float':''}">${body}</div>
+ <nav class="nav" style="grid-template-columns:repeat(${tabs.length},1fr)">${tabs.map(([k,i,t])=>`<button class="${st.tab===k?'on':''} ${k==='world'?'mid':''}" data-tab="${k}"><b>${i}</b>${t}${k==='msg'&&un?`<em>${un}</em>`:''}</button>`).join('')}</nav>`;
+ if(st.tab==='game')bindGames();if(st.tab==='vote'||st.tab==='world')bindAct();if(st.tab==='msg')bindChat(focus);
+ if(walking)walkInfo()}
+function mapOverlay(walking){const sv=st.sv;let h='<div class="mapbar">';
+ if(!walking)h+=`<button class="chip gold" id="tohall">回前厅</button>`;
+ if(sv&&sv.phase===EXPLORE&&st.place!=='书房')h+='<span class="chip gold">勘查现场：去书房看看</span>';
+ if(sv&&sv.search)h+=`${walking?'':`<span class="chip gold">行动点 ${sv.ap}</span>`}<button class="chip" id="persons">搜身</button><button class="chip" id="loclist">地点列表</button>`;
+ if(!walking&&(!sv||(!sv.search&&sv.phase!==EXPLORE)))h+='<span class="chip">点房间名可以走进去</span>';
  return h+'</div>'}
 function mapFallback(){const sv=st.sv;let h=`<div class="grp">平面图</div><div class="maps">${D.maps.map(m=>`<button data-map="${m.id}"><img src="maps/${m.id}.jpg" alt="${esc(m.name)}" loading="lazy"><span>${esc(m.name)}</span></button>`).join('')}</div>`;
  if(sv&&sv.search)h+=`<div class="grp">搜证<small>剩 ${sv.ap} 点</small></div>`+locRows()+personRows();return h}
@@ -222,14 +237,31 @@ function locRows(){const sv=st.sv;const locs=[...new Set(D.cards.filter(c=>c.rou
 function personRows(){const sv=st.sv;return D.roles.filter(x=>x.id!==st.role).map(x=>`<div class="row loc"><span class="t">${esc(x.name)}<small>${sv.persons.includes(x.id)?'已被搜过':''}</small></span><button class="pill" data-person="${x.id}" ${sv.ap<2||sv.persons.includes(x.id)?'disabled':''}>搜身</button></div>`).join('')}
 function clueList(){let h='';const sv=st.sv;
  [1,2,3].forEach(n=>{const got=D.cards.filter(c=>c.round===n&&!c.public&&visible(c));const all=D.cards.filter(c=>c.round===n&&!c.public).length;
-  h+=`<div class="grp">第${'一二三'[n-1]}轮<small>已得 ${got.length} / ${all}</small></div>`+(got.length?got.map(c=>{const x=card(c);const from=sv&&(sv.inbox||[]).find(i=>i.id===c.id);
+  h+=`<div class="grp">第${'一二三'[n-1]}轮<small>已得 ${got.length} / ${all}</small></div>`+(got.length?got.map(c=>{const x=card(c);const from=sv&&(sv.msgs||[]).find(m=>m.card===c.id&&m.from!==st.role);
    return `<div class="row" data-card="${c.id}"><span class="id">${c.id}</span><span class="t">${esc(x.title)}<small>${esc(c.loc||'')}${from?` · ${esc(roleName(from.from))}给你看的`:''}</small></span>›</div>`}).join(''):`<p class="fine">${n===1&&sv&&sv.phase===EXPLORE?'进书房看看，点亮的地方都可以查看。':'还没有'}</p>`)});
  return h+`<details style="margin-top:28px"><summary class="fine">手动输入口令（连不上主持人时用）</summary>${codeBox('cc')}</details>`}
-function msgView(){const sv=st.sv;if(!sv)return '<p class="fine">连上主持人以后，别人给你看的线索会出现在这里。</p>';
- const ib=[...(sv.inbox||[])].reverse(),se=[...(sv.sent||[])].reverse();
- const row=(id,who,note)=>{const c=cardById(id),x=c&&card(c);return `<div class="row" data-card="${id}"><span class="id">${id}</span><span class="t">${esc(x?x.title:'')}<small>${esc(who)}${note?' · “'+esc(note)+'”':''}</small></span>›</div>`};
- return `<p class="fine">在线索卡里点「给别人看」，就能把这张卡给指定的人或所有人看。</p><div class="grp">别人给我看的<small>${ib.length}</small></div>${ib.map(x=>row(x.id,roleName(x.from),x.note)).join('')||'<p class="fine">还没有</p>'}
- <div class="grp">我给别人看的<small>${se.length}</small></div>${se.map(x=>row(x.id,'给 '+(x.to==='all'?'所有人':x.to.map(roleName).join('、')),x.note)).join('')||'<p class="fine">还没有</p>'}`}
+function msgList(){const sv=st.sv;if(!sv)return '<p class="fine">连上主持人以后，可以在这里和别人私聊、给别人看线索。</p>';
+ const ms=sv.msgs||[];const last=k=>{const l=ms.filter(m=>ckey(m)===k);return l[l.length-1]};
+ const keys=['all',...D.roles.filter(r=>r.id!==st.role).map(r=>r.id)].sort((a,b)=>a==='all'?-1:b==='all'?1:((last(b)||{}).t||0)-((last(a)||{}).t||0));
+ return `<div class="grp">交流<small>点一个人进入私聊</small></div>`+keys.map(k=>{const l=last(k),u=unreadOf(k);const prev=l?`${l.from===st.role?'我：':(k==='all'?roleName(l.from)+'：':'')}${l.text||'［线索］'+(l.card||'')}`:(k==='all'?'说给所有人听的话':'');
+  return `<div class="row convo" data-chat="${k}"><span class="av">${k==='all'?'众':esc(roleName(k)[0])}</span><span class="t">${k==='all'?'所有人':esc(roleName(k))}<small>${esc(prev)}</small></span>${u?`<em class="badge">${u}</em>`:'›'}</div>`}).join('')}
+function chatView(){const sv=st.sv,k=st.chat;const ms=((sv&&sv.msgs)||[]).filter(m=>ckey(m)===k);
+ st.read[k]=ms.filter(m=>m.from!==st.role).length;S.set('read',st.read);
+ const bub=m=>{const me=m.from===st.role,c=m.card&&cardById(m.card),x=c&&card(c);
+  return `<div class="msg-row ${me?'me':''}">${k==='all'&&!me?`<span class="nm">${esc(roleName(m.from))}</span>`:''}<div class="bub">${m.card?`<div class="cchip" data-card="${m.card}"><i>${c&&c.loc==='随身物品'?'身':STAMP[c?c.round:2]}</i><span>${m.card}<b>${esc(x?x.title:'')}</b></span></div>`:''}${m.text?`<p>${esc(m.text)}</p>`:''}</div></div>`};
+ return `<div class="chat-h"><button class="pill" id="chatback">‹ 返回</button><b>${k==='all'?'所有人':esc(roleName(k))}</b><span class="fine">${k==='all'?'所有人都看得到':'只有你们两个看得到'}</span></div>
+ <div class="chat" id="chatbox">${ms.map(bub).join('')||'<p class="fine" style="text-align:center;margin-top:40px">还没有说过话</p>'}</div>
+ <div class="composer"><button class="pill" id="chatcard">线索</button><input id="chatin" maxlength="300" placeholder="说点什么" autocomplete="off"><button class="pill send" id="chatsend">发送</button></div>`}
+function bindChat(focus){
+ app.querySelectorAll('[data-chat]').forEach(b=>b.onclick=()=>{st.chat=b.dataset.chat;render();scrollTo(0,document.body.scrollHeight)});
+ const bk=$('chatback');if(bk)bk.onclick=()=>{st.chat=null;render()};
+ const inp=$('chatin');if(!inp)return;inp.value=st.draft||'';if(focus)inp.focus();
+ const box=$('chatbox');if(box)scrollTo(0,document.body.scrollHeight);
+ const go=()=>{const t=inp.value.trim();if(!t)return;if(send({t:'chat',to:st.chat,text:t})){inp.value='';st.draft=''}};
+ $('chatsend').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();go()}};
+ $('chatcard').onclick=()=>{const own=D.cards.filter(c=>!c.public&&visible(c));
+  sheet(`<h3>给${st.chat==='all'?'所有人':esc(roleName(st.chat))}看哪张？</h3><div style="max-height:52vh;overflow:auto">${own.map(c=>`<div class="row" data-pickcard="${c.id}"><span class="id">${c.id}</span><span class="t">${esc(card(c).title)}<small>${esc(c.loc||'')}</small></span>›</div>`).join('')||'<p class="fine">你手里还没有线索卡</p>'}</div><div class="row2"><button class="btn" data-sheet="x">算了</button></div>`);
+  $('sheet').querySelectorAll('[data-pickcard]').forEach(r=>r.onclick=()=>{$('sheet').classList.remove('on');const t=inp.value.trim();if(send({t:'chat',to:st.chat,card:r.dataset.pickcard,text:t})){inp.value='';st.draft=''}})}}
 function voteView(){const sv=st.sv;if(!sv)return '';
  if(sv.vote){const mv=sv.myVote||{};const sel=(k)=>`<select id="v${k}" style="max-width:none;width:100%"><option value="">请选择</option>${D.roles.map(x=>`<option value="${x.id}" ${mv[k]===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}<option value="none" ${mv[k]==='none'?'selected':''}>没有人 / 不知道</option></select>`;
   return `<div class="grp">投票</div><p>第一票：谁杀了沈伯衡？</p>${sel('a')}<p>第二票：谁往尸体上扎了那一刀？</p>${sel('b')}<p>加分题：沈鹤年是谁杀的？</p>${sel('c')}<button class="btn red" id="vote">${sv.myVote?'改票':'投出'}</button><p class="fine">主持人开票前都可以改。</p>`}
@@ -239,6 +271,7 @@ function codeBox(id){return `<div class="code"><input id="${id}" inputmode="nume
 function bindAct(){
  app.querySelectorAll('[data-search]').forEach(b=>b.onclick=()=>{if(send({t:'search',loc:b.dataset.search}))st.expect=1});
  app.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>{if(send({t:'search',person:b.dataset.person}))st.expect=1});
+ const th=$('tohall');if(th)th.onclick=()=>{st.place='前厅';S.set('place','前厅');render()};
  const ps=$('persons');if(ps)ps.onclick=()=>{sheet(`<h3>搜身</h3><p class="fine">搜一个人花 2 点，每人整局只能被搜一次。</p>${personRows()}<div class="row2"><button class="btn" data-sheet="x">关上</button></div>`);
   $('sheet').querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>{$('sheet').classList.remove('on');if(send({t:'search',person:b.dataset.person}))st.expect=1})};
  const ll=$('loclist');if(ll)ll.onclick=()=>{sheet(`<h3>地点</h3><p class="fine">走进房间点具体的地方搜，更像真的；也可以在这里直接搜，会按顺序翻到下一张。</p><div style="max-height:50vh;overflow:auto">${locRows()}</div><div class="row2"><button class="btn" data-sheet="x">关上</button></div>`);
@@ -259,10 +292,10 @@ function showCard(id){const c=cardById(id),x=card(c);if(!x)return;
  open(c.id,cardHTML(c,x)+(can?`<button class="btn" id="share" style="text-align:center">给别人看</button>`:''));
  const b=$('share');if(b)b.onclick=()=>shareSheet(id)}
 function shareSheet(id){const others=D.roles.filter(r=>r.id!==st.role);
- sheet(`<h3>给谁看 ${id}？</h3><div class="pick">${others.map(r=>`<label><input type="checkbox" value="${r.id}"> ${esc(r.name)}</label>`).join('')}<label class="all"><input type="checkbox" value="all"> 所有人</label></div>
- <input id="note" class="note-in" maxlength="80" placeholder="附一句话（可不填）"><div class="row2"><button class="btn" data-sheet="x">算了</button><button class="btn red" data-sheet="go">给他们看</button></div>`,(k,el)=>{
-  if(k!=='go')return;const v=[...el.querySelectorAll('input[type=checkbox]:checked')].map(i=>i.value);if(!v.length)return toast('没选人');
-  send({t:'share',id,to:v.includes('all')?'all':v,note:el.querySelector('#note').value.trim()})})}
+ sheet(`<h3>把 ${id} 给谁看？</h3><p class="fine">会发到你们的私聊里，可以接着说话。</p><div class="pick">${others.map(r=>`<label><input type="radio" name="to" value="${r.id}"> ${esc(r.name)}</label>`).join('')}<label class="all"><input type="radio" name="to" value="all"> 所有人</label></div>
+ <input id="note" class="note-in" maxlength="300" placeholder="附一句话（可不填）"><div class="row2"><button class="btn" data-sheet="x">算了</button><button class="btn red" data-sheet="go">发过去</button></div>`,(k,el)=>{
+  if(k!=='go')return;const v=el.querySelector('input[name=to]:checked');if(!v)return toast('没选人');
+  if(send({t:'chat',to:v.value,card:id,text:el.querySelector('#note').value.trim()})){modal.classList.remove('on');st.tab='msg';st.chat=v.value;render()}})}
 function showImg(title,src){open(title,`<div style="display:flex;gap:8px;margin-bottom:8px"><button class="pill" data-z="1">适应</button><button class="pill" data-z="2">放大</button><button class="pill" data-z="3">再大</button></div><div class="zoom" id="zm"><img src="${src}" alt=""></div>`)}
 function showMap(id){const m=D.maps.find(x=>x.id===id);showImg(m.name,`maps/${id}.jpg`)}
 
