@@ -188,7 +188,7 @@ const M = {};
     M.box(p, r * 2.4, 0.08, 0.15, x, 1.8, z - r * 0.7, '#3a3028'); M.box(p, r * 2.4, 0.08, 0.15, x, 1.8, z + r * 0.7, '#3a3028');
   };
   M.lamp = (p, x, y, z) => { M.cyl(p, 0.35, 0.45, 0.25, x, y, z, '#5a4a3a'); M.cyl(p, 0.2, 0.3, 0.9, x, y + 0.25, z, M.mat('#f2e6c0', { emissive: '#d9b060', emissiveIntensity: 0.6, transparent: true, opacity: 0.85 })); };
-  M.carpet = (p, x0, z0, x1, z1, field, border, y = 0.05) => M.plane(p, x1 - x0, z1 - z0, (x0 + x1) / 2, y, (z0 + z1) / 2, new THREE.MeshStandardMaterial({ map: TX.carpet(field, border), roughness: 1 }));
+  M.carpet = (p, x0, z0, x1, z1, field, border, y = 0.05) => M.plane(p, x1 - x0, z1 - z0, (x0 + x1) / 2, Math.max(y, 0.07), (z0 + z1) / 2, new THREE.MeshStandardMaterial({ map: TX.carpet(field, border), roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
   M.basin = (p, x, z) => { M.cyl(p, 0.9, 0.7, 2.6, x, 0, z, '#eeeeea'); };
   M.toilet = (p, x, z) => { M.box(p, 1.2, 1.4, 1.6, x, 0, z, '#eeeeea'); M.box(p, 1.4, 1.8, 0.6, x, 0, z - 1, '#eeeeea'); };
   M.gramophone = (p, x, z) => { M.box(p, 1.4, 2.6, 1.4, x, 0, z, WOOD_D); const h = new THREE.Mesh(new THREE.ConeGeometry(0.9, 1.8, 16, 1, true), M.mat('#c8a048', { side: THREE.DoubleSide, metalness: 0.4, roughness: 0.4 })); h.position.set(x + 0.5, 3.6, z); h.rotation.z = 1.0; h.castShadow = true; p.add(h); };
