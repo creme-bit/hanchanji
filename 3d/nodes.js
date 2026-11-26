@@ -3,6 +3,7 @@
  * links: 地上的移动圆环（方向朝下的会落在地面上）；spots: 证物/查看点锚点，n 对应剧本里的查看点名字。
  * look: 进门时的初始朝向；rot: 换成 AI 全景图后，如果图的正东不在左边缘，填偏转角度（度），只影响小地图朝向。
  */
+window.PANO_ON = false;   // 全景漫游总开关：有了合格的全景图再改成 true
 window.PANO_VER = "1";
 window.PANO_NODES = {
   "chufang-1": { loc: "厨房", n: "条案边", f: 1, at: [133, 80], rot: 0, img: "assets/panoramas/chufang-1.webp", look: [2.56, -0.47, -9.66],

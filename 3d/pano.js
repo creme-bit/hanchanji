@@ -16,10 +16,12 @@
   const D = V3._data, rname = D.rname, HOT = D.HOT;
   const BYLOC = {};
   for (const id in NODES) (BYLOC[NODES[id].loc] || (BYLOC[NODES[id].loc] = [])).push(id);
-  V3.canWalk = l => !!BYLOC[l];
   V3.nodes = NODES;
   let PW = null;
-  V3.walk = () => PW || (PW = makePano());
+  V3.pano = () => PW || (PW = makePano());
+  // 总开关：3d/nodes.js 里 PANO_ON = true 才用全景图漫游；否则沿用 3D 漫游
+  if (window.PANO_ON || /pano=1/.test(location.search)) { V3.canWalk = l => !!BYLOC[l]; V3.walk = V3.pano; }
+  else V3.walk = V3.walk3d;
 
   /* ---------- 贴图：缓存 + 缺图时用 Canvas 方向占位图 ---------- */
   function placeholder(nd) {
