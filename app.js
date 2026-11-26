@@ -152,7 +152,7 @@ function useStage(mode){if(!G3||!mode){stage.style.display='none';return}
   if(!walk){if(!MAP){MAP=V3.map();MAP.state=locState;MAP.onPick=pickLoc}
    if(MAP.el.parentNode!==stage){stage.innerHTML='';const ph=document.createElement('div');stage.appendChild(ph);MAP.attach(ph)}
    MAP.home(mode==='home');MAP.refresh();return}
-  if(!WALK){WALK=V3.walk();WALK.state=spotState;WALK.onSpot=spotTap;WALK.onBack=()=>{st.place='map';S.set('place','map');render()}}
+  if(!WALK){WALK=V3.walk();WALK.state=spotState;WALK.onSpot=spotTap;WALK.onBack=()=>{st.place='map';S.set('place','map');render()};WALK.onRoom=r=>{st.place=r;S.set('place',r);walkInfo();const mb=app.querySelector('.mapbar');if(mb)mb.outerHTML=mapOverlay(true),bindAct()}}
   if(WALK.el.parentNode!==stage){stage.innerHTML='';WALK.attach(stage)}
   if(WALK.loc()!==st.place)WALK.enter(st.place,V3.label(st.place),'');walkInfo()}).catch(()=>{stage.style.display='none'})}
 function locLeft(loc){const sv=st.sv;return D.cards.filter(c=>c.round===2&&!c.public&&c.loc===loc&&!(sv&&sv.taken.includes(c.id))).length}

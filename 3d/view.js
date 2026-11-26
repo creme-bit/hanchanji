@@ -13,6 +13,11 @@ const V3 = {};
     1: [
       { loc: '前厅', sub: '众人在此', box: [30, 38, 82, 90], at: [57, 6, 70] },
       { loc: '后院', box: [0, 0, 150, 30], at: [86, 3, 16] },
+      { loc: '客厅', box: [82, 38, 106, 64], at: [94, 5, 50] },
+      { loc: '西厢', sub: '方氏旧居', box: [0, 38, 30, 90], at: [15, 4, 58] },
+      { loc: '后廊', box: [0, 30, 150, 38], at: [45, 4, 34] },
+      { loc: '楼梯', box: [106, 38, 124, 64], at: [115, 7, 48] },
+      { loc: '下人房', box: [106, 64, 124, 90], at: [115, 4, 80] },
       { loc: '厨房', box: [124, 38, 150, 90], at: [137, 6, 60] },
       { loc: '一楼东厢（顾雪芝）', name: '东厢', sub: '顾雪芝住', box: [82, 64, 106, 90], at: [94, 6, 77] },
       { loc: '前院', box: [0, 90, 150, 115], at: [112, 2, 106] },
@@ -24,12 +29,13 @@ const V3 = {};
       { loc: '西头卧房（沈伯衡）', name: '卧房', sub: '沈伯衡住', box: [0, 60, 50, 90], at: [20, F2 + 5, 80] },
       { loc: '东头空客房', name: '空客房', box: [100, 60, 150, 90], at: [126, F2 + 5, 77] },
       { loc: '露台', box: [0, 90, 150, 104], at: [50, F2 + 1, 98] },
+      { loc: '沈景行房', box: [0, 30, 52, 52], at: [25, F2 + 5, 40] },
+      { loc: '二老爷旧房', sub: '沈仲衡今晚留宿', box: [52, 30, 106, 52], at: [79, F2 + 5, 40] },
     ],
   };
   const PLAIN = {
-    1: [['柴房', [13, 5, 8]], ['管家房', [36, 5, 10]], ['井', [64, 3, 11]], ['后门', [0, 7, 21.5]], ['西厢', [15, 4, 55]], ['客厅', [94, 4, 50]],
-      ['楼梯', [115, 7, 46]], ['下人房', [115, 4, 80]], ['大门', [57, 6, 90]], ['院门', [57, 9, 115]], ['洗手间', [144, 4, 34]]],
-    2: [['沈景行房', [25, F2 + 5, 40]], ['二老爷旧房', [79, F2 + 5, 40]], ['杂物间', [137, F2 + 5, 40]], ['楼梯', [115, F2 + 1, 41]], ['落地窗', [92.5, F2 + 8, 90]]],
+    1: [['柴房', [13, 5, 8]], ['管家房', [36, 5, 10]], ['井', [64, 3, 11]], ['后门', [0, 7, 21.5]], ['大门', [57, 6, 90]], ['院门', [57, 9, 115]], ['洗手间', [144, 4, 34]]],
+    2: [['杂物间', [137, F2 + 5, 40]], ['楼梯', [115, F2 + 1, 41]], ['落地窗', [92.5, F2 + 8, 90]]],
   };
 
   let DC = null;
@@ -323,7 +329,7 @@ const V3 = {};
     IM.door = new THREE.MeshStandardMaterial({ map: ctex(doorC), bumpMap: ctex(doorC, false), bumpScale: 1, roughness: 0.5 });
     // 天花：石膏 + 线脚
     const ceilC = cvs(256, 256, (g, w, h) => { g.fillStyle = '#d6ccb6'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(120,100,70,.25)'; g.lineWidth = 3; g.strokeRect(10, 10, w - 20, h - 20); g.strokeRect(22, 22, w - 44, h - 44); });
-    IM.ceil = rtx('white_stucco', 'diff') ? (() => { const m = new THREE.MeshStandardMaterial({ map: rtx('white_stucco', 'diff').clone(), normalMap: rtx('white_stucco', 'nor') && rtx('white_stucco', 'nor').clone(), color: 0xd8ccb4, roughness: 0.95 }); m.map.repeat.set(20, 8); m.map.needsUpdate = true; if (m.normalMap) { m.normalMap.repeat.set(20, 8); m.normalMap.needsUpdate = true; } return m; })() : new THREE.MeshStandardMaterial({ map: ctex(ceilC, true, [12, 6]), roughness: 0.95 });
+    IM.ceil = rtx('white_stucco', 'diff') ? (() => { const m = new THREE.MeshStandardMaterial({ map: rtx('white_stucco', 'diff').clone(), normalMap: rtx('white_stucco', 'nor') && rtx('white_stucco', 'nor').clone(), color: 0xa89c88, roughness: 0.95 }); m.map.repeat.set(20, 8); m.map.needsUpdate = true; if (m.normalMap) { m.normalMap.repeat.set(20, 8); m.normalMap.needsUpdate = true; } return m; })() : new THREE.MeshStandardMaterial({ map: ctex(ceilC, true, [12, 6]), roughness: 0.95 });
     return IM;
   }
   const WOODS = new Set(['#6b4128', '#3f2516', '#9a6a42', '#4a2e1c', '#8a5a36', '#b88a5a', '#5a3a24', '#4a261a', '#5a2e1e', '#6b4a2e', '#3a1f12', '#5a3420', '#7a5a3a']);
@@ -580,6 +586,7 @@ const V3 = {};
     M.chair = (p, x, z, ry = 0) => model(p, 'chinese_armchair', x, 0, z, ry, 2.6);
     M.wardrobe = (p, x, z, w, d, h = 6.5, ry = 0) => { const g = M.group(p, x, 0, z, ry), sc = Math.min(3, h / 2.87), cw = 1.26 * sc, n = Math.max(1, Math.round(w / cw));
       for (let i = 0; i < n; i++) model(g, 'chinese_cabinet', (i - (n - 1) / 2) * cw, 0, 0, 0, sc); return g; };
+    M.sofa = (p, x, z, w = 6, ry = 0) => model(p, 'Sofa_01', x, 0, z, ry, 3.4);
     const tbl = M.table;
     M.table = (p, x, z, w, d, h = 2.6, ry = 0, top) => {
       if (w <= 4.6 && d <= 4.2) return model(p, fl(p) > 6 ? 'ClassicNightstand_01' : 'chinese_tea_table', x, 0, z, ry, fl(p) > 6 ? 3.6 : 3.4);
@@ -617,6 +624,19 @@ const V3 = {};
       model(s, 'ornate_mirror_01', 49.3, y + 6.2, 70, -Math.PI / 2, 3.4);
       model(s, 'GothicCommode_01', 46.8, y, 70, -Math.PI / 2, 3);
       model(s, 'vintage_suitcase', 140, y, 72, -0.4, 2.8);
+      const gr = M.group(s, 0, y, 0); M.carpet(gr, 24, 64, 46, 87, '#3a2a40', '#6b2a24', 0.04); M.carpet(gr, 18, 37, 47, 50, '#2b3b52', '#6b2a24', 0.04); M.carpet(gr, 58, 37, 86, 50, '#4a3a34', '#2b3b52', 0.04);
+      model(s, 'round_spectacles', 80.5, y + 2.62, 77.8, 2.6, 3); model(s, 'pocket_watch', 83, y + 2.62, 78.4, 0.4, 3);
+      model(s, 'standing_picture_frame_01', 85.2, y + 2.62, 75.2, -2.2, 3); model(s, 'brass_vase_03', 93.9, y + 2.2, 71.2, 0, 3);
+      model(s, 'ceramic_vase_04', 97, y, 87.5, 0, 3.2); model(s, 'ceramic_vase_02', 55.3, y + 7.6, 70, 0, 2.4); model(s, 'brass_pot_01', 55.3, y + 7.6, 81, 0, 2.4);
+      model(s, 'standing_picture_frame_01', 20.2, y + 2.15, 64.4, 0.6, 3); model(s, 'vintage_oil_lamp', 45, y + 2.7, 81.5, 0, 2.8);
+      model(s, 'jug_01', 46.8, y + 3.64, 68.6, -1.2, 3); model(s, 'treasure_chest', 10, y, 82.6, 0, 3); model(s, 'ceramic_vase_02', 3, y, 88, 0, 3.2);
+      model(s, 'treasure_chest', 133, y, 78, 0.2, 3); model(s, 'treasure_chest', 133.5, y + 1.85, 78.2, 0.1, 2.8); model(s, 'wooden_crate_02', 112, y, 86, 1.4, 3); model(s, 'wooden_crate_01', 146, y, 86.5, -0.2, 3);
+      model(s, 'standing_picture_frame_01', 43, y + 2.62, 33.6, 0.5, 3); model(s, 'ceramic_vase_04', 3.5, y, 48, 0, 3);
+      model(s, 'brass_pot_01', 93, y + 2.62, 34.4, 0, 2.2); model(s, 'standing_picture_frame_01', 84, y + 2.62, 33.8, -0.4, 3); model(s, 'potted_plant_04', 104, y, 48, 0, 3.2);
+      model(s, 'hanging_picture_frame_02', 75, y + 6.4, 52.65, 0, 3); model(s, 'hanging_picture_frame_02', 16, y + 6.4, 52.65, 0, 2.6);
+      model(s, 'hanging_picture_frame_02', 30, y + 6.4, 59.35, Math.PI, 2.6); model(s, 'hanging_picture_frame_02', 85, y + 6.4, 59.35, Math.PI, 2.6);
+      model(s, 'potted_plant_04', 147, y, 54, 0, 3);
+      model(s, 'planter_pot_clay', 50, y, 102, 0, 3.4); model(s, 'planter_pot_clay', 110, y, 102, 1, 3.4);
       lampStand(s, 70.5, y + 2.6, 74.6);
       hang(s, 'scroll', 0.65, y + 6, 70, Math.PI / 2); hang(s, 'calli', 49.4, y + 6, 78, -Math.PI / 2, '靜水流深');
       hang(s, 'calli', 30, y + 6, 59.4, Math.PI, '寧靜致遠'); hang(s, 'scroll', 90, y + 6, 59.4, Math.PI);
@@ -638,6 +658,27 @@ const V3 = {};
       model(s, 'wooden_lantern_01', 22, 0, 22, 0, 3); model(s, 'wooden_lantern_01', 52, 0, 27, 0.5, 3);
       model(s, 'chinese_console_table', 33, 0, 75, Math.PI / 2, 3);
       model(s, 'vintage_oil_lamp', -16, 3.4, 23, 0, 3);
+      model(s, 'chinese_screen_panels', 57, 0, 42.6, 0, 3.6);
+      M.carpet(s, 84, 66, 97, 80, '#3a2a40', '#6b2a24', 0.04); M.carpet(s, 4, 44, 26, 60, '#3a3430', '#4a2a20', 0.04);
+      [52, 58, 64, 70, 76].forEach((z, i) => { model(s, 'carved_wooden_plate', 54.2, 2.8, z, i, 3); model(s, 'carved_wooden_plate', 59.8, 2.8, z + 3, i + 2, 3); });
+      [55, 67, 73].forEach(z => model(s, 'wooden_bowl_01', 57, 2.8, z, z, 3)); model(s, 'ceramic_pot', 57, 2.8, 61.5, 0, 2.4);
+      model(s, 'brass_pot_01', 33, 2.0, 72, 0, 2.6); model(s, 'brass_vase_02', 33, 2.0, 78, 0, 2.6);
+      model(s, 'standing_picture_frame_01', 97.5, 3.05, 40.6, -1.4, 3); model(s, 'brass_vase_03', 102.5, 3.05, 40.6, 0, 3); model(s, 'ceramic_vase_04', 104, 0, 62, 0, 3.2);
+      model(s, 'treasure_chest', 98.75, 0, 75.4, Math.PI, 3); model(s, 'jug_01', 100.6, 2.7, 68.4, 0.6, 3); model(s, 'ceramic_vase_02', 104.4, 0, 88, 0, 3);
+      model(s, 'wooden_crate_01', 20, 0, 85, 0.3, 3); model(s, 'brass_pot_01', 26, 0, 70, 0, 2.6);
+      model(s, 'planter_pot_clay', 50, 0, 32, 0, 3.4); model(s, 'planter_pot_clay', 96, 0, 32, 1, 3.4); model(s, 'wooden_bucket_01', 118, 0, 33, 0.6, 3);
+      model(s, 'wooden_crate_02', 121.5, 0, 86, 0, 3); model(s, 'jug_01', 115, 3.0, 85, 1, 3);
+      model(s, 'pot_enamel_01', 140.7, 3.1, 43.2, 0, 3.4); model(s, 'brass_pot_01', 146, 3.1, 43.2, 0, 2.8);
+      model(s, 'wooden_cutting_board', 127.8, 3.0, 54.5, 1.57, 3); model(s, 'wooden_bowl_01', 127.8, 3.0, 72, 0, 3);
+      model(s, 'ceramic_pot', 147, 0, 74, 1.6, 3); model(s, 'ceramic_pot', 147, 0, 78.5, 1.2, 3); model(s, 'wooden_crate_01', 136, 0, 88.3, 0, 3);
+      model(s, 'carved_wooden_plate', 139, 2.6, 65, 0, 3); model(s, 'wooden_bowl_01', 141, 2.6, 66, 0, 3);
+      model(s, 'vintage_wooden_drawer_01', -15, 0, 30.4, Math.PI, 3); model(s, 'magnifying_glass_01', -16, 3.4, 19, 1.2, 3); model(s, 'Lantern_01', -16, 3.4, 13.5, 0, 3);
+      model(s, 'wooden_crate_01', -33, 0, 10.5, 0, 3); model(s, 'wooden_crate_02', -33, 1.0, 10.5, 1.57, 2.6);
+      [-28, -24, -20].forEach((x, i) => model(s, 'ceramic_pot', x, 0, 12.6, i, 2.2));
+      model(s, 'wooden_crate_01', 24, 0, 26.5, 0.4, 3); model(s, 'wooden_bucket_01', 60.5, 0, 14, 0, 3);
+      [110, 120, 130].forEach(x => model(s, 'planter_pot_clay', x, 0, 28, x, 3.6));
+      model(s, 'Lantern_01', 52, 1.4, 92.6, 0, 3.2); model(s, 'Lantern_01', 62, 1.4, 92.6, 0, 3.2);
+      model(s, 'planter_pot_clay', 30, 0, 98, 0, 3.6); model(s, 'planter_pot_clay', 84, 0, 98, 1, 3.6);
       hang(s, 'scroll', 105.4, 6, 50, -Math.PI / 2); hang(s, 'calli', 105.4, 6, 76, -Math.PI / 2, '花好月圓');
       hang(s, 'scroll', 30.6, 6, 70, Math.PI / 2);
       model(s, 'chinese_chandelier', 57, IH, 54, 0, 3); model(s, 'chinese_chandelier', 57, IH, 74, 0, 3); model(s, 'Chandelier_02', 94, IH - 3.2, 51, 0, 3.2); model(s, 'chinese_chandelier', 94, IH, 77, 0, 2.6);
@@ -694,20 +735,82 @@ const V3 = {};
   }
   // 机位：look = 初始朝向点
   const VP = {
-    '前厅': [{ f: 1, at: [45, 85], look: [60, 50], n: '大门口' }, { f: 1, at: [70, 47], look: [50, 72], n: '主位边' }],
-    '书房': [{ f: 2, at: [76, 67.6], look: [76.5, 80], n: '书桌前' }, { f: 2, at: [93, 74], look: [72, 78], n: '落地窗边' }, { f: 2, at: [59, 65], look: [53, 76], n: '门口' }],
-    '二楼走廊': [{ f: 2, at: [14, 56], look: [60, 56], n: '西头' }, { f: 2, at: [62, 56], look: [59, 60], n: '书房门外' }, { f: 2, at: [128, 56], look: [60, 56], n: '东头' }],
-    '西头卧房（沈伯衡）': [{ f: 2, at: [40, 71], look: [18, 70], n: '屋里' }],
-    '东头空客房': [{ f: 2, at: [111, 71], look: [128, 80], n: '屋里' }],
-    '露台': [{ f: 2, at: [30, 97], look: [90, 94], n: '西段' }, { f: 2, at: [90, 98], look: [91, 90], n: '落地窗外' }, { f: 2, at: [128, 97], look: [80, 95], n: '东段' }],
-    '后院': [{ f: 1, at: [52, 24], look: [64, 11], n: '井边' }, { f: 1, at: [30, 25], look: [12, 10], n: '柴房前' }],
-    '厨房': [{ f: 1, at: [133, 80], look: [142, 46], n: '厨房' }],
-    '一楼东厢（顾雪芝）': [{ f: 1, at: [87.5, 76], look: [101, 70], n: '屋里' }],
-    '老号（公馆后门外三十步）': [{ f: 1, at: [-23, 29.5], look: [-19, 13], n: '老号' }],
-    '前院': [{ f: 1, at: [70, 110], look: [40, 104], n: '前院' }],
+    '前厅': [{ f: 1, at: [45, 85], look: [60, 50], n: '大门内' }, { f: 1, at: [70, 47], look: [50, 72], n: '主位边' }, { f: 1, at: [39, 62], look: [60, 66], n: '西侧' }, { f: 1, at: [76, 76], look: [45, 58], n: '东侧' }],
+    '客厅': [{ f: 1, at: [88, 56], look: [100, 44], n: '沙发边' }, { f: 1, at: [100, 47], look: [86, 58], n: '陈列柜前' }],
+    '一楼东厢（顾雪芝）': [{ f: 1, at: [87.5, 76], look: [101, 70], n: '屋里' }, { f: 1, at: [96, 71], look: [86, 86], n: '妆台边' }],
+    '西厢': [{ f: 1, at: [22, 54], look: [9, 72], n: '屋里' }, { f: 1, at: [16, 80], look: [24, 44], n: '南窗下' }],
+    '后廊': [{ f: 1, at: [20, 34], look: [70, 34], n: '西段' }, { f: 1, at: [73, 34.5], look: [73, 28], n: '后门内' }, { f: 1, at: [100, 34], look: [40, 34], n: '东段' }],
+    '楼梯': [{ f: 1, at: [113, 62.6], look: [115, 40], n: '楼梯口' }],
+    '下人房': [{ f: 1, at: [115, 70], look: [115, 86], n: '屋里' }],
+    '厨房': [{ f: 1, at: [133, 80], look: [142, 46], n: '条案边' }, { f: 1, at: [134, 47], look: [130, 80], n: '灶台前' }],
+    '后院': [{ f: 1, at: [52, 24], look: [64, 11], n: '井边' }, { f: 1, at: [30, 25], look: [12, 10], n: '柴房前' }, { f: 1, at: [90, 22], look: [40, 14], n: '东头' }],
+    '老号（公馆后门外三十步）': [{ f: 1, at: [-23, 29.5], look: [-19, 13], n: '进门' }, { f: 1, at: [-24, 17], look: [-14, 24], n: '药柜前' }],
+    '前院': [{ f: 1, at: [70, 110], look: [40, 104], n: '院中' }, { f: 1, at: [57, 98], look: [57, 112], n: '台阶下' }],
+    '二楼走廊': [{ f: 2, at: [14, 56], look: [60, 56], n: '西头' }, { f: 2, at: [62, 56], look: [59, 60], n: '书房门外' }, { f: 2, at: [115, 56], look: [60, 56], n: '楼梯口' }, { f: 2, at: [138, 56], look: [60, 56], n: '东头' }],
+    '书房': [{ f: 2, at: [76, 67.6], look: [76.5, 80], n: '书桌前' }, { f: 2, at: [93, 74], look: [72, 78], n: '落地窗边' }, { f: 2, at: [59, 65], look: [53, 76], n: '门口' }, { f: 2, at: [60, 85], look: [85, 70], n: '南窗下' }],
+    '西头卧房（沈伯衡）': [{ f: 2, at: [40, 71], look: [18, 70], n: '屋里' }, { f: 2, at: [22, 85], look: [40, 66], n: '南窗下' }],
+    '东头空客房': [{ f: 2, at: [111, 71], look: [128, 80], n: '门口' }, { f: 2, at: [127, 84], look: [110, 66], n: '南窗下' }],
+    '沈景行房': [{ f: 2, at: [40, 44], look: [10, 38], n: '屋里' }],
+    '二老爷旧房': [{ f: 2, at: [68, 44], look: [90, 36], n: '屋里' }],
+    '露台': [{ f: 2, at: [24, 96], look: [90, 94], n: '西段' }, { f: 2, at: [90, 98], look: [91, 90], n: '落地窗外' }, { f: 2, at: [128, 97], look: [80, 95], n: '东段' }],
   };
+  // 门：[房间A, A 落脚机位, 房间B, B 落脚机位, A 侧标记位置, B 侧标记位置, A→B 说明, B→A 说明]
+  const DOORS = [
+    ['前厅', 2, '西厢', 0, [30.6, 3, 49.8], [29.4, 3, 49.8]],
+    ['前厅', 1, '客厅', 0, [81.4, 3, 46.8], [82.6, 3, 46.8]],
+    ['前厅', 3, '一楼东厢（顾雪芝）', 0, [81.4, 3, 80.8], [82.6, 3, 80.8]],
+    ['前厅', 2, '后廊', 0, [36.8, 3, 38.6], [36.8, 3, 37.4]],
+    ['前厅', 0, '前院', 1, [57, 3, 89.4], [57, 3, 90.8], '出大门', '进大门'],
+    ['客厅', 1, '后廊', 2, [88.7, 3, 38.6], [88.7, 3, 37.4]],
+    ['西厢', 0, '后廊', 0, [5.8, 3, 38.6], [5.8, 3, 37.4]],
+    ['后廊', 2, '楼梯', 0, [115, 3, 37.4], [115, 3, 38.6]],
+    ['后廊', 1, '厨房', 1, [129, 3, 37.4], [129, 3, 38.6]],
+    ['后廊', 1, '后院', 0, [73, 3, 30.6], [73, 3, 29.4], '出后门', '进后门'],
+    ['楼梯', 0, '下人房', 0, [120.3, 3, 63.4], [120.3, 3, 64.6]],
+    ['楼梯', 0, '二楼走廊', 2, [115, 6, 48], [115, F2 + 1, 50], '上二楼', '下一楼'],
+    ['后院', 1, '老号（公馆后门外三十步）', 0, [0.8, 3, 21.7], [-10.6, 3, 20], '出院子后门，去老号', '回公馆后院'],
+    ['二楼走廊', 0, '西头卧房（沈伯衡）', 0, [44.6, F2 + 3, 59.4], [44.6, F2 + 3, 60.6]],
+    ['二楼走廊', 1, '书房', 2, [58.9, F2 + 3, 59.4], [58.9, F2 + 3, 60.6]],
+    ['二楼走廊', 2, '东头空客房', 0, [103.6, F2 + 3, 59.4], [103.6, F2 + 3, 60.6]],
+    ['二楼走廊', 0, '沈景行房', 0, [44.5, F2 + 3, 52.6], [44.5, F2 + 3, 51.4]],
+    ['二楼走廊', 2, '二老爷旧房', 0, [97.5, F2 + 3, 52.6], [97.5, F2 + 3, 51.4]],
+    ['西头卧房（沈伯衡）', 1, '露台', 0, [21.5, F2 + 3.6, 89.4], [21.5, F2 + 3.6, 90.6], '翻窗到露台', '翻窗进卧房'],
+    ['书房', 1, '露台', 1, [92.5, F2 + 3.6, 89.4], [92.5, F2 + 3.6, 90.6], '推开落地窗', '进书房'],
+    ['东头空客房', 1, '露台', 2, [128, F2 + 3.6, 89.4], [128, F2 + 3.6, 90.6], '翻窗到露台', '翻窗进空客房'],
+  ];
+  const ROOMNAME = { '一楼东厢（顾雪芝）': '东厢', '老号（公馆后门外三十步）': '老号', '西头卧房（沈伯衡）': '卧房', '东头空客房': '空客房', '二楼走廊': '二楼走廊' };
+  const rname = l => ROOMNAME[l] || l;
   // 可查看的地方：r1 = 第一轮可得，r2 = 第二轮对应卡，t = 没有卡时的描述
   const SP = {
+    '客厅': [
+      { n: '留声机', at: [103, 4, 42], t: '留声机的唱针还搭在唱片上，唱片停了。' },
+      { n: '陈列柜', at: [100, 5.5, 40.5], t: '玻璃柜里摆着洋酒、几只瓷盘和一对铜烛台。' },
+      { n: '圆桌', at: [94, 3.4, 50], t: '桌上一套茶具，两只杯子里还有残茶。' },
+      { n: '油画', at: [105.2, 6.2, 52], t: '一幅西洋风景画，画框很新。' },
+    ],
+    '西厢': [
+      { n: '蒙布的床', at: [9, 3.5, 68.5], t: '白布底下是一张床。这屋子八年没人住了。' },
+      { n: '梳妆台', at: [24, 5, 43], t: '梳妆台也蒙着布，镜子朝里扣着。' },
+    ],
+    '后廊': [
+      { n: '后门', at: [73, 4.5, 30.6], t: '后门通后院，门闩是拉开的。' },
+      { n: '水缸', at: [115, 2.2, 34], t: '一口大水缸，水面上浮着几片落叶。' },
+    ],
+    '楼梯': [{ n: '楼梯', at: [115, 5, 50], t: '木楼梯，踩上去吱呀响。楼上的人听得见。' }],
+    '下人房': [
+      { n: '铺盖', at: [110, 2.4, 74.5], t: '两张窄床，铺盖叠得方方正正。' },
+      { n: '木箱', at: [115, 3.4, 85], t: '下人的箱子，里面是换洗衣裳。' },
+    ],
+    '沈景行房': [
+      { n: '书架', at: [24.5, F2 + 4, 33], t: '几本洋文书，一叠乐谱。' },
+      { n: '留声机', at: [47, F2 + 3, 47], t: '旁边一摞唱片，最上面一张是梅兰芳。' },
+      { n: '书桌', at: [39, F2 + 3, 34.7], t: '桌上摊着一封没写完的信，只写了个抬头。' },
+    ],
+    '二老爷旧房': [
+      { n: '写字台', at: [88.5, F2 + 3, 34.7], t: '桌上一把算盘，一叠空白账页。' },
+      { n: '衣柜', at: [75, F2 + 5, 43], t: '几件旧长衫，樟脑味很重。' },
+      { n: '脸盆架', at: [101, F2 + 3, 34], t: '盆里的水是凉的。' },
+    ],
     '前厅': [
       { n: '长桌', at: [57, 3.6, 66], t: '晚宴撤了一半，碗碟还摆着，十个座位空了一个。' },
       { n: '主位', at: [57, 4.6, 45.2], t: '六点四十分，沈伯衡就坐在这里，说子时要当众开铁盒。说完他上了楼。' },
@@ -807,11 +910,13 @@ const V3 = {};
       cam.position.copy(pos); cam.lookAt(pos.clone().add(f)); cam.updateMatrixWorld();
     }
     let lbl = [];
+    function doorsHere() { const out = []; DOORS.forEach(d => { if (d[0] === loc) out.push({ to: d[2], vi: d[3], at: d[4], n: d[6] || '去' + rname(d[2]) }); else if (d[2] === loc) out.push({ to: d[0], vi: d[1], at: d[5], n: d[7] || '去' + rname(d[0]) }); }); return out; }
     function labels() {
       if (!lbl._loc || lbl._loc !== loc + vi) {
         lbox.innerHTML = ''; lbl = [];
         (SP[loc] || []).forEach(sp => { const d = document.createElement('button'); d.className = 'walk-spot'; d.innerHTML = `<i></i><span>${sp.n}</span>`; d.onclick = e => { e.stopPropagation(); self.onSpot && self.onSpot(loc, sp); }; lbox.appendChild(d); lbl.push({ d, at: sp.at, sp }); });
         vps.forEach((v, i) => { if (i === vi) return; const d = document.createElement('button'); d.className = 'walk-go'; d.innerHTML = `<span>去${v.n}</span>`; d.onclick = e => { e.stopPropagation(); go(i); }; lbox.appendChild(d); lbl.push({ d, at: [v.at[0], (v.f === 2 ? F2 : 0) + 0.3, v.at[1]] }); });
+        doorsHere().forEach(o => { const d = document.createElement('button'); d.className = 'walk-go door'; d.innerHTML = `<span>${o.n} ›</span>`; d.onclick = e => { e.stopPropagation(); moveTo(o.to, o.vi); }; lbox.appendChild(d); lbl.push({ d, at: o.at }); });
         lbl._loc = loc + vi;
       }
       const v = new THREE.Vector3();
@@ -839,14 +944,18 @@ const V3 = {};
       else { while (y1 - yaw > Math.PI) y1 -= 2 * Math.PI; while (yaw - y1 > Math.PI) y1 += 2 * Math.PI; tw = { a: pos.clone(), b: p, y0: yaw, y1, t0: performance.now() }; }
       lbl._loc = null; need = true;
     }
-    self.enter = (l, title, sub) => {
-      loc = l; vps = VP[l] || []; if (!vps.length) return;
-      el.querySelector('.walk-t b').textContent = title || l; el.querySelector('.walk-t small').textContent = sub || '';
-      const f = vps[0].f;
-      const start = () => { cur = scenes[f]; wait.style.display = 'none'; go(0, true); need = true; };
-      if (scenes[f]) start(); else { wait.style.display = ''; cur = null; setTimeout(async () => { scenes[f] = await buildInterior(f, renderer); start(); }, 40); }
-      lbl._loc = null;
-    };
+    let floor = 0, busy = false;
+    function moveTo(l, i = 0, instant) {
+      const list = VP[l]; if (!list || !list.length || busy) return; const v = list[Math.min(i, list.length - 1)];
+      const changed = l !== loc; loc = l; vps = list; lbl._loc = null;
+      el.querySelector('.walk-t b').textContent = rname(l);
+      if (changed && self.onRoom) self.onRoom(l);
+      const idx = list.indexOf(v);
+      if (floor === v.f && cur && !instant) { go(idx); return; }
+      const start = () => { cur = scenes[v.f]; floor = v.f; wait.style.display = 'none'; busy = false; go(idx, true); need = true; };
+      if (scenes[v.f]) start(); else { busy = true; wait.style.display = ''; setTimeout(async () => { scenes[v.f] = await buildInterior(v.f, renderer); start(); }, 40); }
+    }
+    self.enter = (l) => { if (l === loc && cur) return; moveTo(l, 0, true); };
     self.attach = (host) => { host.appendChild(el); fit(); if (!raf) raf = requestAnimationFrame(frame); need = true; };
     self.refresh = () => { need = true; };
     self.info = (h) => { el.querySelector('.walk-i').innerHTML = h; };
@@ -873,7 +982,7 @@ const V3 = {};
   let WALK = null;
   V3.walk = () => WALK || (WALK = makeWalk());
   V3.canWalk = l => !!VP[l];
-  V3.label = l => { for (const f of [1, 2]) { const h = HOT[f].find(x => x.loc === l); if (h) return h.name || h.loc; } return l; };
+  V3.label = l => rname(l);
 
   /* ------------------------------------------------------------ 铜锁 */
   function envMap(renderer) {
