@@ -69,7 +69,7 @@ function hostStart(){hsInit();keepAwake();if(H.peer)return;
  H.peer.on('error',e=>{if(e.type==='unavailable-id'){H.peer.destroy();H.peer=null;st.room='';S.set('room','');hostStart()}else{toast('连接出错：'+e.type);}});
  H.peer.on('disconnected',()=>{setTimeout(()=>H.peer&&!H.peer.destroyed&&H.peer.reconnect(),2000)});
  H.peer.on('connection',c=>{H.conns.set(c.peer,{c,role:null});
-  c.on('data',d=>hostMsg(c,d));c.on('close',()=>{H.conns.delete(c.peer);render()})})}
+  c.on('data',d=>hostMsg(c,d));c.on('close',()=>{const x=H.conns.get(c.peer);H.conns.delete(c.peer);if(x&&x.role&&![...H.conns.values()].some(y=>y.role===x.role))[...H.conns.values()].forEach(y=>{try{y.c.send({t:'gone',id:x.role})}catch(e){}});render()})})}
 function connOf(role){return [...H.conns.values()].filter(x=>x.role===role)}
 function stateFor(role){const s=H.s,ph=PH[s.phase];
  const mine=Object.entries(s.ledger).filter(([,r])=>r===role).map(([id])=>HD.codes[id]);
@@ -80,8 +80,10 @@ function push(role){connOf(role).forEach(x=>{try{x.c.send(stateFor(role))}catch(
 function pushAll(){hsSave();[...H.conns.values()].forEach(x=>{if(x.role)try{x.c.send(stateFor(x.role))}catch(e){}});render()}
 const DEEP={'R2-10':'R2-09'};
 function hostMsg(c,d){const x=H.conns.get(c.peer);if(!x||!d||typeof d!=='object')return;
- if(d.t==='hello'&&D.roles.some(r=>r.id===d.role)){x.role=d.role;x.v=d.v||0;push(d.role);render();return}
- const who=x.role;if(!who)return;const s=H.s,ph=PH[s.phase];
+ if(d.t==='hello'&&D.roles.some(r=>r.id===d.role)){x.role=d.role;x.v=d.v||0;push(d.role);[...H.conns.values()].forEach(y=>{if(y!==x&&y.pos&&y.role!==x.role)try{c.send(y.pos)}catch(e){}});render();return}
+ const who=x.role;if(!who)return;
+ if(d.t==='pos'){const p={t:'pos',id:who,name:roleName(who),f:d.f===2?2:1,x:+d.x||0,z:+d.z||0,yaw:+d.yaw||0,loc:String(d.loc||'').slice(0,30)};x.pos=p;[...H.conns.values()].forEach(y=>{if(y!==x&&y.role&&y.role!==who)try{y.c.send(p)}catch(e){}});return}   // 在宅子里走动：转给其他人
+ const s=H.s,ph=PH[s.phase];
  if(d.t==='search'){if(!ph.search)return tell(c,'现在不是搜证时间');
   if(d.person){const pid=HD.persons[roleName(d.person)];if((s.ap[who]??0)<2)return tell(c,'行动点不够（搜人要 2 点）');
    if(d.person===who)return tell(c,'不能搜自己');if(s.persons[d.person])return tell(c,'这个人已经被搜过了');
@@ -125,7 +127,10 @@ function dial(){const c=P.peer.connect('hanchanji-'+st.room,{reliable:true});P.c
  c.on('data',onHost);c.on('close',()=>{P.on=false;render();retry()})}
 function retry(){clearTimeout(P.timer);P.timer=setTimeout(()=>{if(P.peer&&!P.peer.destroyed&&!P.on)dial()},4000)}
 function leaveRoom(){try{P.peer&&P.peer.destroy()}catch(e){}P.peer=null;P.on=false}
+const PEERS={};
 function onHost(d){if(!d||typeof d!=='object')return;
+ if(d.t==='pos'){if(d.id===st.role)return;PEERS[d.id]=d;if(WALK&&WALK.peer)WALK.peer(d.id,d);return}
+ if(d.t==='gone'){delete PEERS[d.id];if(WALK&&WALK.peerGone)WALK.peerGone(d.id);return}
  if(d.t==='msg'){toast(String(d.m));return}
  if(d.t==='state'){
   if(d.gid&&st.gid&&d.gid!==st.gid)wipe();if(d.gid&&d.gid!==st.gid){st.gid=d.gid;S.set('gid',d.gid)}
@@ -154,7 +159,7 @@ function useStage(mode){if(!G3||!mode){stage.style.display='none';return}
   if(!walk){if(!MAP){MAP=V3.map();MAP.state=locState;MAP.onPick=pickLoc}
    if(MAP.el.parentNode!==stage){stage.innerHTML='';const ph=document.createElement('div');stage.appendChild(ph);MAP.attach(ph)}
    MAP.home(mode==='home');MAP.refresh();return}
-  if(!WALK){WALK=V3.walk();WALK.state=spotState;WALK.onSpot=spotTap;WALK.onBack=()=>{st.place='map';S.set('place','map');render()};WALK.onRoom=r=>{st.place=r;S.set('place',r);walkInfo();const mb=app.querySelector('.mapbar');if(mb)mb.outerHTML=mapOverlay(true),bindAct()}}
+  if(!WALK){WALK=V3.walk();WALK.onMove=p=>{if(P.conn&&P.on)try{P.conn.send(Object.assign({t:'pos'},p))}catch(e){}};if(WALK.peer)Object.keys(PEERS).forEach(k=>WALK.peer(k,PEERS[k]));WALK.state=spotState;WALK.onSpot=spotTap;WALK.onBack=()=>{st.place='map';S.set('place','map');render()};WALK.onRoom=r=>{st.place=r;S.set('place',r);walkInfo();const mb=app.querySelector('.mapbar');if(mb)mb.outerHTML=mapOverlay(true),bindAct()}}
   if(WALK.el.parentNode!==stage){stage.innerHTML='';WALK.attach(stage)}
   if(WALK.loc()!==st.place)WALK.enter(st.place,V3.label(st.place),'');walkInfo()}).catch(()=>{stage.style.display='none'})}
 function locLeft(loc){const sv=st.sv;return D.cards.filter(c=>c.round===2&&!c.public&&c.loc===loc&&!(sv&&sv.taken.includes(c.id))).length}
@@ -439,7 +444,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button,[data-car
  if(d.code){const i=$(d.code);const m=tryCode(i.value);$(d.code+'m').textContent=m.msg;i.value='';if(m.n||m.a3)setTimeout(render,700)}});
 window.HCJ={lock:()=>LOCK,asset:id=>asset(id),walk:()=>WALK,map:()=>MAP,st};
 const hr=(location.hash.match(/^#r(\d{4})$/)||[])[1];if(hr&&!st.host){st.room=hr;S.set('room',hr)}
-fetch('data.json?v=21').then(r=>r.json()).then(d=>{D=d;
+fetch('data.json?v=22').then(r=>r.json()).then(d=>{D=d;
  if(st.host){const t=dec(D.host,st.host);if(t)HD=JSON.parse(t);else{st.host=null}}
  if(st.role&&!st.host)joinRoom();render()}).catch(()=>{app.innerHTML='<div class="hero"><p>数据没加载出来，刷新试试。</p></div>'});
 render();
