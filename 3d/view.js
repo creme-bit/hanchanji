@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'textures.js', 'models.js', 'scene.js']) await load('3d/' + f + (/^(models|scene|textures)/.test(f) ? '?v=10' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'textures.js', 'models.js', 'scene.js']) await load('3d/' + f + (/^(models|scene|textures)/.test(f) ? '?v=11' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -644,7 +644,7 @@ const V3 = {};
     M.chair = (p, x, z, ry = 0) => model(p, 'chinese_armchair', x, 0, z, ry, 2.6);
     M.wardrobe = (p, x, z, w, d, h = 6.5, ry = 0) => { const g = M.group(p, x, 0, z, ry), sc = Math.min(3, h / 2.87), cw = 1.26 * sc, n = Math.max(1, Math.round(w / cw));
       for (let i = 0; i < n; i++) model(g, 'chinese_cabinet', (i - (n - 1) / 2) * cw, 0, 0, 0, sc); return g; };
-    M.sofa = (p, x, z, w = 6, ry = 0) => model(p, 'Sofa_01', x, 0, z, ry, 3.4);
+    M.sofa = (p, x, z, w = 6, ry = 0) => model(p, 'Sofa_01', x, 0, z, ry, w > 10 ? 4.3 : 3.4);
     const tbl = M.table;
     M.table = (p, x, z, w, d, h = 2.6, ry = 0, top) => {
       if (w <= 4.6 && d <= 4.2) return model(p, fl(p) > 6 ? 'ClassicNightstand_01' : 'chinese_tea_table', x, 0, z, ry, fl(p) > 6 ? 3.6 : 3.4);
@@ -669,6 +669,72 @@ const V3 = {};
     M.matHook = (color, opt) => (WOODS.has(color) && !opt.transparent ? IM.wood(color) : null);
     richFurniture();
     try { fn(); } finally { Object.assign(TX, TXK); M.wall = ow; M.door = od; M.table = ot; M.chair = oc; M.armchair = oa; M.sofa = os; M.wardrobe = owr; M.floor = of; M.carpet = ocp; M.bookcase = ob; M.slumped = osl; M.desk = odk; M.dining = odn; M.screen = osc; M.plant = opl; M.roundTable = ort; M.matHook = null; }
+  }
+  /* ---------- 客厅：三十年代上海洋式客厅 ---------- */
+  function parlor(s) {
+    const mk = (p, geo, m, x, yy, z) => { if (geo.isMesh) { z = yy; yy = x; x = m; } const o = geo.isMesh ? geo : new THREE.Mesh(geo, m); o.position.set(x, yy, z); o.castShadow = o.receiveShadow = true; p.add(o); return o; };
+    const G = (x, yy, z, ry = 0) => { const g = new THREE.Group(); g.position.set(x, yy, z); g.rotation.y = ry; s.add(g); return g; };
+    const lathe = (pts, m, seg = 24) => new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r, h]) => new THREE.Vector2(r, h)), seg), m);
+    const WD = c => IM.wood(c);
+    const marble = new THREE.MeshStandardMaterial({ map: ctex(cvs(256, 256, (q, w, h) => { q.fillStyle = '#d8d2c6'; q.fillRect(0, 0, w, h); q.strokeStyle = 'rgba(120,110,100,.35)'; for (let i = 0; i < 18; i++) { q.lineWidth = Math.random() * 2; q.beginPath(); let x = Math.random() * w, y = 0; q.moveTo(x, y); while (y < h) { x += (Math.random() - 0.5) * 30; y += 12; q.lineTo(x, y); } q.stroke(); } })), roughness: 0.25 });
+    const black = new THREE.MeshStandardMaterial({ color: 0x0e0d0c, roughness: 0.3 });
+    const cloth = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8 });
+    // —— 东墙壁炉：大理石炉框，炉台上座钟、烛台、照片，上方挂油画 ——
+    { const g = G(105.2, 0, 51, -Math.PI / 2);
+      mk(g, new THREE.BoxGeometry(6.4, 4.0, 1.0), marble, 0, 2.0, 0);
+      mk(g, new THREE.BoxGeometry(7.0, 0.3, 1.5), marble, 0, 4.15, 0.15);
+      mk(g, new THREE.BoxGeometry(3.4, 2.8, 1.02), black, 0, 1.4, 0.01);
+      mk(g, new THREE.BoxGeometry(7.2, 0.18, 2.6), marble, 0, 0.09, 0.9);
+      [-1.4, 1.4].forEach(x => { const a = mk(g, lathe([[0, 0], [0.18, 0], [0.12, 0.2], [0.06, 1.0], [0.12, 1.1], [0, 1.25]], IM.brass, 10), x, 0, 0.5); });
+      for (let i = 0; i < 3; i++) { const lg = mk(g, new THREE.CylinderGeometry(0.16, 0.16, 2.2, 8), WD('#3a2414'), (i - 1) * 0.5, 0.35 + (i % 2) * 0.25, 0.4); lg.rotation.z = Math.PI / 2; lg.rotation.y = (i - 1) * 0.3; }
+      const ember = new THREE.PointLight(0xff7a30, 3, 7, 2); ember.position.set(0, 0.8, 1.2); g.add(ember);
+      [-2.6, 2.6].forEach(x => { const c = G(0, 0, 0); g.add(c); c.position.set(x, 4.3, 0.2); mk(c, lathe([[0, 0], [0.22, 0], [0.18, 0.06], [0.05, 0.2], [0.04, 0.8], [0.1, 0.85], [0, 0.88]], IM.brass, 12), 0, 0, 0); mk(c, new THREE.CylinderGeometry(0.06, 0.06, 0.45, 8), cloth('#efe6d0'), 0, 1.1, 0); });
+      [[-1.5, 0.3], [1.6, -0.25]].forEach(([x, r]) => { const f = G(0, 0, 0); g.add(f); f.position.set(x, 4.3, 0.25); f.rotation.y = r;
+        mk(f, new THREE.BoxGeometry(0.9, 1.1, 0.08), IM.brass, 0, 0.55, 0);
+        mk(f, new THREE.PlaneGeometry(0.7, 0.9), new THREE.MeshStandardMaterial({ map: ctex(cvs(64, 80, (q, w, h) => { q.fillStyle = '#b8a07a'; q.fillRect(0, 0, w, h); q.fillStyle = '#5a4630'; q.beginPath(); q.ellipse(32, 30, 12, 15, 0, 0, 7); q.fill(); q.fillRect(14, 46, 36, 34); })), roughness: 0.6 }), 0, 0.55, 0.05); });
+    }
+    model(s, 'mantel_clock_01', 104.9, 4.3, 51, -Math.PI / 2, 5);
+    // —— 北墙立式钢琴 + 琴凳 ——
+    { const g = G(95.0, 0, 39.4, 0), P = new THREE.MeshStandardMaterial({ color: 0x1a0e08, roughness: 0.18 });
+      mk(g, new THREE.BoxGeometry(5.0, 4.2, 1.2), P, 0, 2.1, 0);
+      mk(g, new THREE.BoxGeometry(5.0, 0.35, 2.2), P, 0, 2.45, 0.5);
+      const keys = ctex(cvs(512, 32, (q, w, h) => { q.fillStyle = '#f2ecdc'; q.fillRect(0, 0, w, h); q.fillStyle = '#222'; for (let i = 0; i < 52; i++) { q.fillRect(i * w / 52, 0, 1, h); if ([0, 1, 3, 4, 5].includes(i % 7) && i < 51) q.fillRect(i * w / 52 + 6, 0, 5, h * 0.62); } }));
+      const kb = mk(g, new THREE.PlaneGeometry(4.6, 0.75), new THREE.MeshStandardMaterial({ map: keys, roughness: 0.4 }), 0, 2.64, 1.1); kb.rotation.x = -Math.PI / 2;
+      mk(g, new THREE.BoxGeometry(4.7, 0.9, 0.08), P, 0, 3.3, 0.62).rotation.x = -0.18;
+      [-2.3, 2.3].forEach(x => mk(g, new THREE.BoxGeometry(0.3, 2.3, 0.3), P, x, 1.15, 1.45));
+      mk(g, new THREE.BoxGeometry(1.4, 0.9, 0.04), cloth('#efe6cc'), 0, 3.6, 0.67).rotation.x = -0.18;
+      [-1.6, 1.6].forEach(x => { mk(g, lathe([[0, 0], [0.2, 0], [0.06, 0.15], [0.05, 0.8], [0.15, 0.9], [0, 0.9]], IM.brass, 12), x, 4.2, 0.3); });
+      model(g, 'brass_vase_01', 0.4, 4.2, 0.2, 0, 2.0);
+      const b = G(95.0, 0, 43.2); mk(b, new THREE.BoxGeometry(3.0, 0.4, 1.3), cloth('#5a2a24'), 0, 1.75, 0); [[-1.3, -0.5], [1.3, -0.5], [-1.3, 0.5], [1.3, 0.5]].forEach(([x, z]) => mk(b, new THREE.BoxGeometry(0.18, 1.6, 0.18), P, x, 0.8, z)); }
+    // —— 沙发西头：方几上三十年代礼拜堂式收音机 ——
+    model(s, 'ClassicNightstand_01', 85.2, 0, 58.8, Math.PI / 2, 3.4);
+    { const g = G(85.2, 2.55, 58.8, Math.PI / 2 + 0.3);
+      const pr = new THREE.Shape(); pr.moveTo(-0.7, 0); pr.lineTo(0.7, 0); pr.lineTo(0.7, 1.0); pr.absarc(0, 1.0, 0.7, 0, Math.PI, false); pr.lineTo(-0.7, 0);
+      const body = mk(g, new THREE.ExtrudeGeometry(pr, { depth: 0.75, bevelEnabled: true, bevelSize: 0.04, bevelThickness: 0.04, bevelSegments: 2 }), WD('#6a3a1a'), 0, 0, -0.4);
+      const gr = mk(g, new THREE.CircleGeometry(0.45, 24, 0, Math.PI), cloth('#b8a070'), 0, 1.0, 0.4);
+      mk(g, new THREE.PlaneGeometry(0.9, 0.5), cloth('#b8a070'), 0, 0.75, 0.4);
+      [-0.3, 0, 0.3].forEach(x => { const k = mk(g, new THREE.CylinderGeometry(0.07, 0.07, 0.08, 12), black, x, 0.22, 0.42); k.rotation.x = Math.PI / 2; });
+      mk(g, new THREE.CircleGeometry(0.12, 16), new THREE.MeshStandardMaterial({ color: 0xffd890, emissive: 0xd8a040, emissiveIntensity: 0.6 }), 0, 0.45, 0.41); }
+    // —— 沙发东头落地灯、茶几上的烟具报纸 ——
+    { const g = G(102.8, 0, 59.2);
+      mk(g, lathe([[0, 0], [0.55, 0], [0.5, 0.1], [0.1, 0.2], [0, 0.2]], IM.brass), 0, 0, 0);
+      mk(g, new THREE.CylinderGeometry(0.06, 0.06, 5.2, 8), IM.brass, 0, 2.7, 0);
+      mk(g, new THREE.CylinderGeometry(0.65, 1.05, 1.0, 8, 1, true), new THREE.MeshStandardMaterial({ color: 0xe8c898, emissive: 0xd89850, emissiveIntensity: 0.6, roughness: 0.9, side: THREE.DoubleSide }), 0, 5.6, 0);
+      const l = new THREE.PointLight(0xffc070, 9, 11, 1.6); l.position.set(0, 5.4, 0); g.add(l); }
+    { const T = 2.62; mk(s, lathe([[0, 0], [0.4, 0], [0.45, 0.12], [0.35, 0.14], [0, 0.06]], new THREE.MeshStandardMaterial({ color: 0x6a8a8a, roughness: 0.1, transparent: true, opacity: 0.8 })), 93.2, T, 50.8);
+      mk(s, new THREE.BoxGeometry(0.7, 0.18, 0.45), WD('#5a2a14'), 95.0, T + 0.09, 49.2);
+      const np = mk(s, new THREE.BoxGeometry(0.8, 0.03, 1.1), new THREE.MeshStandardMaterial({ map: ctex(cvs(128, 180, (q, w, h) => { q.fillStyle = '#e4dcc4'; q.fillRect(0, 0, w, h); q.fillStyle = '#2a2420'; q.font = '700 18px serif'; q.fillText('申 報', 36, 24); q.fillStyle = 'rgba(40,36,30,.5)'; for (let y = 36; y < h - 8; y += 6) q.fillRect(8 + (y % 18 ? 0 : 60), y, y % 18 ? w - 16 : 52, 2); })), roughness: 0.9 }), 93.4, T + 0.02, 49.4); np.rotation.y = 0.5; }
+    // —— 南墙：沙发上方一排相框，两盏壁灯 ——
+    [[89.5, 6.6, 0.8, 1.1], [92.0, 6.9, 1.2, 1.5], [96.0, 6.9, 1.2, 1.5], [98.5, 6.6, 0.8, 1.1], [94.0, 7.4, 1.6, 1.1]].forEach(([x, y, w, h], i) => {
+      const g = G(x, y, 63.45, Math.PI); mk(g, new THREE.BoxGeometry(w + 0.16, h + 0.16, 0.08), i % 2 ? IM.brass : WD('#2a1608'), 0, 0, 0);
+      mk(g, new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: ctex(cvs(64, 80, (q, cw, ch) => { q.fillStyle = '#c0a882'; q.fillRect(0, 0, cw, ch); q.fillStyle = '#4a3a2a'; const n = i === 4 ? 4 : 1 + (i % 2); for (let k = 0; k < n; k++) { const cx = cw * (k + 0.5) / n; q.beginPath(); q.ellipse(cx, ch * 0.38, 7, 9, 0, 0, 7); q.fill(); q.fillRect(cx - 9, ch * 0.52, 18, ch * 0.5); } })), roughness: 0.6 }), 0, 0, 0.05); });
+    [87, 101].forEach(x => { const g = G(x, 6.4, 63.6, Math.PI); mk(g, new THREE.BoxGeometry(0.5, 0.8, 0.12), IM.brass, 0, 0, 0);
+      mk(g, lathe([[0.1, 0], [0.32, 0.25], [0.36, 0.55], [0.32, 0.6]], new THREE.MeshStandardMaterial({ color: 0xf6e8c8, emissive: 0xf0c070, emissiveIntensity: 1.1, roughness: 0.6, side: THREE.DoubleSide }), 16), 0, -0.1, 0.7); });
+    // 书报架、痰盂、高脚花几、靠垫
+    { const g = G(88.2, 0, 46.4, 0.4); [-0.5, 0.5].forEach(x => mk(g, new THREE.BoxGeometry(0.1, 1.8, 1.2), WD('#4a2a14'), x, 0.9, 0));
+      mk(g, new THREE.BoxGeometry(1.0, 0.1, 1.2), WD('#4a2a14'), 0, 0.2, 0); [0.15, -0.15].forEach(z => { const p = mk(g, new THREE.BoxGeometry(0.85, 1.2, 0.04), cloth('#ddd2b8'), 0, 0.95, z); p.rotation.x = z * 0.8; }); }
+    model(s, 'pot_enamel_01', 99.6, 0, 55.6, 0.2, 2.2);
+    model(s, 'potted_plant_04', 104.3, 0, 40.8, 0.4, 3.2); model(s, 'ceramic_vase_02', 83.6, 0, 62.4, 0, 3);
   }
   /* ---------- 前厅：照民国公馆厅堂实景加密陈设 ---------- */
   function hall(s) {
@@ -947,7 +1013,7 @@ const V3 = {};
       model(s, 'antique_ceramic_vase_01', 50.5, 3.2, 40.4, 0, 2.4); model(s, 'antique_ceramic_vase_01', 63.5, 3.2, 40.4, 2, 2.4);
       model(s, 'antique_ceramic_vase_01', 33.5, 0, 87, 0, 3.6); model(s, 'antique_ceramic_vase_01', 80.5, 0, 41, 1, 3.6);
       model(s, 'vintage_cabinet_01', 100, 0, 39.6, 0, 3);
-      model(s, 'fancy_picture_frame_01', 105.3, 6.2, 52, -Math.PI / 2, 5);
+      model(s, 'fancy_picture_frame_01', 104.6, 7.0, 51, -Math.PI / 2, 4.2); parlor(s);
       model(s, 'ornate_mirror_01', 105.3, 6.0, 67.7, -Math.PI / 2, 3.4);
       model(s, 'chinese_commode', -34.6, 0, 22, Math.PI / 2, 2.6);
       model(s, 'wooden_bucket_01', 144, 0, 60, 0.3, 3); model(s, 'wooden_bucket_01', 145, 0, 63.5, 1.2, 2.8);
@@ -956,7 +1022,7 @@ const V3 = {};
       model(s, 'vintage_oil_lamp', -16, 3.4, 23, 0, 3);
       M.carpet(s, 84, 66, 97, 80, '#3a2a40', '#6b2a24', 0.04); M.carpet(s, 4, 44, 26, 60, '#3a3430', '#4a2a20', 0.04);
       model(s, 'brass_pot_01', 33, 2.0, 72, 0, 2.6); model(s, 'brass_vase_02', 33, 2.0, 78, 0, 2.6);
-      model(s, 'standing_picture_frame_01', 97.5, 3.05, 40.6, -1.4, 3); model(s, 'brass_vase_03', 102.5, 3.05, 40.6, 0, 3); model(s, 'ceramic_vase_04', 104, 0, 62, 0, 3.2);
+      model(s, 'brass_vase_03', 102.5, 3.05, 40.6, 0, 3); model(s, 'ceramic_vase_04', 104, 0, 62, 0, 3.2);
       model(s, 'treasure_chest', 98.75, 0, 75.4, Math.PI, 3); model(s, 'jug_01', 100.6, 2.7, 68.4, 0.6, 3); model(s, 'ceramic_vase_02', 104.4, 0, 88, 0, 3);
       model(s, 'wooden_crate_01', 20, 0, 85, 0.3, 3); model(s, 'brass_pot_01', 26, 0, 70, 0, 2.6);
       model(s, 'planter_pot_clay', 50, 0, 32, 0, 3.4); model(s, 'planter_pot_clay', 96, 0, 32, 1, 3.4); model(s, 'wooden_bucket_01', 118, 0, 33, 0.6, 3);
@@ -1079,7 +1145,7 @@ const V3 = {};
       { n: '留声机', at: [103, 4, 42], t: '留声机的唱针还搭在唱片上，唱片停了。' },
       { n: '陈列柜', at: [100, 5.5, 40.5], t: '玻璃柜里摆着洋酒、几只瓷盘和一对铜烛台。' },
       { n: '圆桌', at: [94, 3.4, 50], t: '桌上一套茶具，两只杯子里还有残茶。' },
-      { n: '油画', at: [105.2, 6.2, 52], t: '一幅西洋风景画，画框很新。' },
+      { n: '油画', at: [104.6, 7.6, 51], t: '一幅西洋风景画，画框很新。' },
     ],
     '西厢': [
       { n: '蒙布的床', at: [9, 3.5, 68.5], t: '白布底下是一张床。这屋子八年没人住了。' },

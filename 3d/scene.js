@@ -79,7 +79,7 @@ const SCENE = {};
     M.covered(s, 9, 68.5, 12, 17, 2.6); M.covered(s, 24, 43, 8, 4, 6.5); M.covered(s, 22, 85, 10, 6, 3);
     // 客厅
     M.carpet(s, 84, 40, 104, 61, '#4a3a34', '#6b2a24');
-    M.sofa(s, 94, 59.5, 13, Math.PI); M.armchair(s, 86, 50, Math.PI / 2); M.armchair(s, 102, 50, -Math.PI / 2);
+    M.sofa(s, 94, 59.0, 13, Math.PI); M.armchair(s, 87.6, 51, Math.PI / 2); M.armchair(s, 100.6, 51, -Math.PI / 2);
     M.roundTable(s, 94, 50, 2.4, 2); M.gramophone(s, 103, 42); M.plant(s, 84.5, 40.5, 1);
     // 东厢
     M.bed(s, 98.75, 82.9, 11.5, 11.8, Math.PI, true);
