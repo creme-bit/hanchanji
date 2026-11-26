@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'textures.js', 'models.js', 'scene.js']) await load('3d/' + f); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'textures.js', 'models.js', 'scene.js']) await load('3d/' + f); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -57,7 +57,6 @@ const V3 = {};
     M.door(s, -10, 17, 6, 1.1, '#5a2e1e');
     M.box(s, 3, 3.4, 16, -16, 0, 20, '#4a2e1c');                      // 柜台
     drugCab(s, -23, 9.4, 18, 2, 7);                                     // 药柜
-    M.box(s, 2.6, 6.5, 12, -34.2, 0, 22, '#3f2516');
     M.trunkBox(s, -30, 27, 5, 4, 2.6); M.lamp(s, -16, 3.4, 15);
     [[-7, 21], [-4.5, 21.6], [-2, 21.3]].forEach(([x, z]) => M.box(s, 2, 0.12, 1.6, x, 0, z, '#9a958a'));
   }
@@ -311,6 +310,20 @@ const V3 = {};
     return IM;
   }
   const WOODS = new Set(['#6b4128', '#3f2516', '#9a6a42', '#4a2e1c', '#8a5a36', '#b88a5a', '#5a3a24', '#4a261a', '#5a2e1e', '#6b4a2e', '#3a1f12', '#5a3420', '#7a5a3a']);
+  /* ---------- 写实模型（Poly Haven, CC0） ---------- */
+  const GL = {}; let gltfLoader = null; V3.onModel = null;
+  function gload(id) {
+    if (!gltfLoader) gltfLoader = new THREE.GLTFLoader();
+    return GL[id] || (GL[id] = new Promise((ok, no) => gltfLoader.load('3d/models/' + id + '.glb', g => {
+      g.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; const ms = Array.isArray(o.material) ? o.material : [o.material];
+        ms.forEach(m => { if (IM && IM.brass.envMap) { m.envMap = IM.brass.envMap; m.envMapIntensity = 0.55; } m.needsUpdate = true; }); } });
+      ok(g.scene); }, undefined, no)));
+  }
+  function model(p, id, x, y, z, ry = 0, sc = 3, opt = {}) {
+    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; g.scale.setScalar(sc); p.add(g);
+    gload(id).then(src => { const c = src.clone(true); if (opt.center) { const b = new THREE.Box3().setFromObject(c); c.position.x -= (b.min.x + b.max.x) / 2; c.position.z -= (b.min.z + b.max.z) / 2; } g.add(c); g.updateMatrixWorld(true); V3.onModel && V3.onModel(); }).catch(() => {});
+    return g;
+  }
   /* ---------- 室内：构件 ---------- */
   function uvWall(geo, horiz, cx, y0, cz) {
     const p = geo.attributes.position, uv = geo.attributes.uv;
@@ -493,7 +506,7 @@ const V3 = {};
       return g;
     };
     keep.floor = M.floor; keep.bookcase = M.bookcase; keep.slumped = M.slumped;
-    M.floor = (p, x0, z0, x1, z1, tx, scale = 12, y = 0.02, opt) => keep.floor(p, x0, z0, x1, z1, tx, scale * 0.45, y, Object.assign({ roughness: 0.5 }, opt || {}));
+    M.floor = (p, x0, z0, x1, z1, tx, scale = 12, y = 0.02, opt) => keep.floor(p, x0, z0, x1, z1, tx, scale * 0.45, y, Object.assign({ roughness: 0.45, color: 0xa08c78 }, opt || {}));
     M.bookcase = (p, x, z, w, d, h, ry = 0) => {
       const g = M.group(p, x, 0, z, ry), m = W('#3a1f12');
       add(g, new THREE.BoxGeometry(w, h, 0.2), m, 0, h / 2, -d / 2 + 0.1);
@@ -526,37 +539,67 @@ const V3 = {};
       const blood = add(g, new THREE.CircleGeometry(0.55, 20), new THREE.MeshStandardMaterial({ color: 0x3a0c08, roughness: 0.4 }), -0.45, 3.92, 1.35); blood.rotation.x = -0.55;
       return g;
     };
+    keep.screen = M.screen; keep.plant = M.plant; keep.roundTable = M.roundTable;
+    const fl = p => (p.isScene ? 0 : (p.position ? p.position.y : 0));
+    M.armchair = (p, x, z, ry = 0) => { const parlor = fl(p) < 6 && x > 82 && x < 106 && z < 64; return model(p, parlor ? 'GreenChair_01' : 'chinese_armchair', x, 0, z, ry, parlor ? 3.1 : 2.9); };
+    M.screen = (p, x, z, n = 4, seg = 1.6, ry = 0) => model(p, 'chinese_screen_panels', x, 0, z, ry, 3.2);
+    M.plant = (p, x, z, s = 1, y = 0) => model(p, 'potted_plant_02', x, y, z, x * 0.37, 2.2 * s, { center: true });
+    M.roundTable = (p, x, z) => { const g = model(p, 'round_wooden_table_01', x, 0, z, 0, 2.6); model(p, 'tea_set_01', x, 2.62, z, 0.6, 2.6, { center: true }); return g; };
+    M.chair = (p, x, z, ry = 0) => model(p, 'chinese_armchair', x, 0, z, ry, 2.6);
+    M.wardrobe = (p, x, z, w, d, h = 6.5, ry = 0) => { const g = M.group(p, x, 0, z, ry), sc = Math.min(3, h / 2.87), cw = 1.26 * sc, n = Math.max(1, Math.round(w / cw));
+      for (let i = 0; i < n; i++) model(g, 'chinese_cabinet', (i - (n - 1) / 2) * cw, 0, 0, 0, sc); return g; };
+    const tbl = M.table;
+    M.table = (p, x, z, w, d, h = 2.6, ry = 0, top) => {
+      if (w <= 4.6 && d <= 4.2) return model(p, fl(p) > 6 ? 'ClassicNightstand_01' : 'chinese_tea_table', x, 0, z, ry, fl(p) > 6 ? 3.6 : 3.4);
+      return tbl(p, x, z, w, d, h, ry, top);
+    };
     return () => { Object.assign(M, keep); };
   }
   function interior(fn, f) {
     imats();
-    const ow = M.wall, od = M.door, ot = M.table, oc = M.chair, oa = M.armchair, os = M.sofa, owr = M.wardrobe, of = M.floor, ob = M.bookcase, osl = M.slumped;
+    const ow = M.wall, od = M.door, ot = M.table, oc = M.chair, oa = M.armchair, os = M.sofa, owr = M.wardrobe, of = M.floor, ob = M.bookcase, osl = M.slumped, osc = M.screen, opl = M.plant, ort = M.roundTable;
     M.wall = iwall(y => (y > 6 ? 'wood' : 'paper'));
     M.door = (p, x, z, w, angle) => { const g = M.group(p, x, 0, z, angle); const b = M.box(g, w, 7.3, 0.25, w / 2, 0, 0, IM.door); M.cyl(g, 0.12, 0.12, 0.5, w - 0.5, 3.6, 0.2, IM.brass); return g; };
     M.matHook = (color, opt) => (WOODS.has(color) && !opt.transparent ? IM.wood(color) : null);
     richFurniture();
-    try { fn(); } finally { M.wall = ow; M.door = od; M.table = ot; M.chair = oc; M.armchair = oa; M.sofa = os; M.wardrobe = owr; M.floor = of; M.bookcase = ob; M.slumped = osl; M.matHook = null; }
+    try { fn(); } finally { M.wall = ow; M.door = od; M.table = ot; M.chair = oc; M.armchair = oa; M.sofa = os; M.wardrobe = owr; M.floor = of; M.bookcase = ob; M.slumped = osl; M.screen = osc; M.plant = opl; M.roundTable = ort; M.matHook = null; }
   }
   function decorate(s, f) {
     if (f === 2) {
       const y = F2;
       hang(s, 'plaque', 51.0, y + 8.9, 75.5, Math.PI / 2, '懸壺濟世', 7, 1.6);
       hang(s, 'scroll', 99.4, y + 6, 79, -Math.PI / 2);
-      clock(s, 98.4, 85.5, -Math.PI / 2, y);
+      model(s, 'vintage_grandfather_clock_01', 98.2, y, 85.5, -Math.PI / 2, 3.2);
+      model(s, 'antique_ceramic_vase_01', 55.5, y, 87.5, 0, 3.4);
+      model(s, 'mantel_clock_01', 82, y + 2.6, 74.6, Math.PI, 3);
+      model(s, 'ClassicConsole_01', 30, y, 52.9, 0, 3); model(s, 'brass_vase_01', 30, y + 2.85, 52.6, 0, 2.6);
+      model(s, 'ornate_mirror_01', 49.3, y + 6.2, 70, -Math.PI / 2, 3.4);
+      model(s, 'GothicCommode_01', 46.8, y, 70, -Math.PI / 2, 3);
+      model(s, 'vintage_suitcase', 140, y, 72, -0.4, 2.8);
       lampStand(s, 70.5, y + 2.6, 74.6);
       hang(s, 'scroll', 0.65, y + 6, 70, Math.PI / 2); hang(s, 'calli', 49.4, y + 6, 78, -Math.PI / 2, '靜水流深');
       hang(s, 'calli', 30, y + 6, 59.4, Math.PI, '寧靜致遠'); hang(s, 'scroll', 90, y + 6, 59.4, Math.PI);
       hang(s, 'scroll', 100.6, y + 6, 72, Math.PI / 2);
-      chandelier(s, 75, y + IH, 75, true); chandelier(s, 25, y + IH, 75, false); chandelier(s, 125, y + IH, 75, false);
+      model(s, 'Chandelier_01', 75, y + IH, 75, 0, 3.2); model(s, 'Chandelier_01', 25, y + IH, 75, 0.4, 2.8); chandelier(s, 125, y + IH, 75, false);
       [30, 95].forEach(x => chandelier(s, x, y + IH, 56, false));
     } else {
       hang(s, 'plaque', 57, 9.0, 38.65, 0, '沈萬春堂', 9, 1.9);
       hang(s, 'calli', 49.5, 5.6, 38.7, 0, '杏林春暖'); hang(s, 'calli', 64.5, 5.6, 38.7, 0, '橘井泉香');
       hang(s, 'scroll', 57, 5.4, 38.7, 0, null, 3.6, 5.0);
-      clock(s, 79.5, 86.5, Math.PI, 0);
+      model(s, 'vintage_grandfather_clock_01', 79.5, 0, 87.6, Math.PI, 3.2);
+      model(s, 'brass_vase_01', 50, 3.2, 40.5, 0, 2.6); model(s, 'brass_vase_01', 64, 3.2, 40.5, 0, 2.6);
+      model(s, 'antique_ceramic_vase_01', 33.5, 0, 87, 0, 3.6); model(s, 'antique_ceramic_vase_01', 80.5, 0, 41, 1, 3.6);
+      model(s, 'vintage_cabinet_01', 100, 0, 39.6, 0, 3);
+      model(s, 'fancy_picture_frame_01', 105.3, 6.2, 52, -Math.PI / 2, 5);
+      model(s, 'ornate_mirror_01', 105.3, 6.0, 67.7, -Math.PI / 2, 3.4);
+      model(s, 'chinese_commode', -34.6, 0, 22, Math.PI / 2, 2.6);
+      model(s, 'wooden_bucket_01', 144, 0, 60, 0.3, 3); model(s, 'wooden_bucket_01', 145, 0, 63.5, 1.2, 2.8);
+      model(s, 'wooden_lantern_01', 22, 0, 22, 0, 3); model(s, 'wooden_lantern_01', 52, 0, 27, 0.5, 3);
+      model(s, 'chinese_console_table', 33, 0, 75, Math.PI / 2, 3);
+      model(s, 'vintage_oil_lamp', -16, 3.4, 23, 0, 3);
       hang(s, 'scroll', 105.4, 6, 50, -Math.PI / 2); hang(s, 'calli', 105.4, 6, 76, -Math.PI / 2, '花好月圓');
       hang(s, 'scroll', 30.6, 6, 70, Math.PI / 2);
-      chandelier(s, 57, IH, 54, true); chandelier(s, 57, IH, 74, true); chandelier(s, 94, IH, 51, true); chandelier(s, 94, IH, 77, false);
+      model(s, 'chinese_chandelier', 57, IH, 54, 0, 3); model(s, 'chinese_chandelier', 57, IH, 74, 0, 3); model(s, 'Chandelier_02', 94, IH - 3.2, 51, 0, 3.2); model(s, 'chinese_chandelier', 94, IH, 77, 0, 2.6);
       chandelier(s, 15, IH, 64, false); chandelier(s, -23, IH, 20, false);
       lampStand(s, 102.6, 3.9, 69);
     }
@@ -743,11 +786,12 @@ const V3 = {};
       if (!need || !cur) return; need = false; place(); renderer.render(cur, cam); labels();
     }
     let raf = 0;
+    V3.onModel = () => { need = true; };
     function yawTo(v, x, z) { return Math.atan2(x - v.at[0], z - v.at[1]); }
     function go(i, instant) {
       vi = i; const v = vps[i], p = new THREE.Vector3(v.at[0], (v.f === 2 ? F2 : 0) + EYE, v.at[1]);
       let y1 = yawTo(v, v.look[0], v.look[1]);
-      if (instant) { pos.copy(p); yaw = y1; pitch = W / H < 0.8 ? -0.3 : -0.15; }
+      if (instant) { pos.copy(p); yaw = y1; pitch = W / H < 0.8 ? -0.2 : -0.1; }
       else { while (y1 - yaw > Math.PI) y1 -= 2 * Math.PI; while (yaw - y1 > Math.PI) y1 += 2 * Math.PI; tw = { a: pos.clone(), b: p, y0: yaw, y1, t0: performance.now() }; }
       lbl._loc = null; need = true;
     }
