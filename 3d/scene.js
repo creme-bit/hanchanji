@@ -82,7 +82,7 @@ const SCENE = {};
     M.sofa(s, 94, 59.0, 13, Math.PI); M.armchair(s, 87.6, 51, Math.PI / 2); M.armchair(s, 100.6, 51, -Math.PI / 2);
     M.roundTable(s, 94, 50, 2.4, 2); M.gramophone(s, 103, 42); M.plant(s, 84.5, 40.5, 1);
     // 东厢
-    M.bed(s, 98.75, 82.9, 11.5, 11.8, Math.PI, true);
+    M.bed(s, 99.5, 84.2, 7.5, 9.2, Math.PI, true);
     M.wardrobe(s, 88.5, 67.7, 9, 3.4, 6.5, 0);
     M.table(s, 102.6, 67.7, 5.2, 3.4, 2.7, 0, '#4a2e1c'); M.box(s, 2.8, 1.2, 2.2, 102.6, 2.7, 67.7, '#3a1f12'); M.box(s, 1.8, 2.6, 0.2, 102.6, 2.7, 66.2, M.mat('#cfd8d8', { metalness: 0.6, roughness: 0.15 }));
     M.screen(s, 84.5, 86, 3, 3);
@@ -150,7 +150,7 @@ const SCENE = {};
     M.bookcase(g, 24.5, 32.4, 11, 2, 7); M.gramophone(g, 47, 47); M.armchair(g, 25, 46, Math.PI);
     // 仲衡房
     M.bed(g, 61, 39.5, 10, 15, 0, true); M.table(g, 88.5, 34.7, 13, 5.4); M.chair(g, 88.5, 39, Math.PI);
-    M.wardrobe(g, 75, 42.6, 10, 3.2, 6.5, 0); M.basin(g, 101, 34);
+    M.wardrobe(g, 75, 31.9, 10, 3.2, 6.5, 0); M.basin(g, 101, 34);
     // 杂物间
     M.box(g, 22, 4, 3, 137, 0, 32, '#5a3a24'); M.trunkBox(g, 133, 42, 6, 4, 3); M.trunkBox(g, 142.5, 44.2, 7, 4.4, 3.2);
     // 卧房
