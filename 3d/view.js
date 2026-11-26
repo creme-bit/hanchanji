@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'textures.js', 'models.js', 'scene.js']) await load('3d/' + f + (/^(models|scene|textures)/.test(f) ? '?v=18' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js']) await load('3d/' + f + (/^(models|scene|textures|look)/.test(f) ? '?v=19' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -262,7 +262,6 @@ const V3 = {};
   async function realTex() {
     if (RT._ok) return;
     await Promise.all(RNAMES.map(async n => { RT[n] = {}; await Promise.all(['diff', 'nor', 'rough'].map(async k => { try { RT[n][k] = await loadImg(`3d/tex/${n}_${k}.webp`); } catch (e) { } })); }));
-    try { RT._env = await loadImg('3d/tex/env_reading_room.jpg'); } catch (e) { }
     RT._ok = 1;
   }
   const RTX = {};
@@ -327,9 +326,9 @@ const V3 = {};
     });
     IM.grain = ctex(grain); IM.grainB = ctex(grain, false);
     const woodCache = {};
-    IM.wood = (color, rough = 0.42) => { const key = color + rough; if (woodCache[key]) return woodCache[key]; const h = {}; new THREE.Color(color).getHSL(h);
+    IM.wood = (color, rough = 0.58) => { const key = color + rough; if (woodCache[key]) return woodCache[key]; const h = {}; new THREE.Color(color).getHSL(h);
       const n = h.h < 0.045 && h.s > 0.3 ? 'lacquered_cherry_wood' : (h.l > 0.3 ? 'wooden_panels' : 'dark_wood'); const T = rtx(n, 'diff') ? n : 'dark_wood';
-      const m = rtx(T, 'diff') ? new THREE.MeshStandardMaterial({ map: rtx(T, 'diff'), normalMap: rtx(T, 'nor'), color: new THREE.Color(color).multiplyScalar(T === 'dark_wood' ? 2.6 : 1.9), roughness: rough, metalness: 0.05 }) : new THREE.MeshStandardMaterial({ map: IM.grain, bumpMap: IM.grainB, bumpScale: 0.6, color, roughness: rough });
+      const m = rtx(T, 'diff') ? new THREE.MeshStandardMaterial({ map: rtx(T, 'diff'), normalMap: rtx(T, 'nor'), color: new THREE.Color(color).multiplyScalar(T === 'dark_wood' ? 3.4 : 2.1), roughness: rough, metalness: 0.05 }) : new THREE.MeshStandardMaterial({ map: IM.grain, bumpMap: IM.grainB, bumpScale: 0.6, color, roughness: rough });
       m.userData.wood = 1; return woodCache[key] = m; };
     // 丝绒（拉扣）
     const velvet = (base) => cvs(256, 256, (g, w, h) => {
@@ -422,6 +421,7 @@ const V3 = {};
     IM.door = new THREE.MeshStandardMaterial({ map: ctex(doorC), bumpMap: ctex(doorC, false), bumpScale: 1, roughness: 0.5 });
     // 天花：石膏 + 线脚
     const ceilC = cvs(256, 256, (g, w, h) => { g.fillStyle = '#d6ccb6'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(120,100,70,.25)'; g.lineWidth = 3; g.strokeRect(10, 10, w - 20, h - 20); g.strokeRect(22, 22, w - 44, h - 44); });
+    IM.base = IM.wood('#24140a', 0.5); IM.crown = LOOK.pbr('plaster', 0xd6cdbd);
     IM.ceil = rtx('white_stucco', 'diff') ? (() => { const m = new THREE.MeshStandardMaterial({ map: rtx('white_stucco', 'diff').clone(), normalMap: rtx('white_stucco', 'nor') && rtx('white_stucco', 'nor').clone(), color: 0xa89c88, roughness: 0.95 }); m.map.repeat.set(20, 8); m.map.needsUpdate = true; if (m.normalMap) { m.normalMap.repeat.set(20, 8); m.normalMap.needsUpdate = true; } return m; })() : new THREE.MeshStandardMaterial({ map: ctex(ceilC, true, [12, 6]), roughness: 0.95 });
     return IM;
   }
@@ -456,7 +456,17 @@ const V3 = {};
       const mA = sideA ? IM['wall_' + sideA] : m, mB = sideB ? IM['wall_' + sideB] : m;
       if (mA !== m || mB !== m) mm = horiz ? [mA, mA, mA, mA, mA, mB] : [mA, mB, mA, mA, mA, mA];
     }
-    const o = new THREE.Mesh(geo, mm); o.position.set(cx, y0, cz); o.castShadow = o.receiveShadow = true; o.userData.wall = 1; p.add(o); return o;
+    const o = new THREE.Mesh(geo, mm); o.position.set(cx, y0, cz); o.castShadow = o.receiveShadow = true; o.userData.wall = 1; p.add(o);
+    // 踢脚线、顶角线：两面各一条，外墙那一面不加
+    if (IM.base && len > 0.6) {
+      const up = (p.position ? p.position.y : 0) + y0 >= F2 - 0.5, d = t / 2 + 0.6;
+      const sides = [[1, horiz ? roomStyle(cx, cz + d, up) : roomStyle(cx + d, cz, up)], [-1, horiz ? roomStyle(cx, cz - d, up) : roomStyle(cx - d, cz, up)]];
+      sides.forEach(([sg, st]) => { if (!st || st === 'ext') return;
+        const add2 = (hh, dd, yy, mt) => { const b = new THREE.Mesh(new THREE.BoxGeometry(horiz ? len : dd, hh, horiz ? dd : len), mt); b.position.set(horiz ? 0 : sg * (t / 2 + dd / 2), yy, horiz ? sg * (t / 2 + dd / 2) : 0); b.receiveShadow = true; o.add(b); };
+        if (y0 < 0.01) add2(0.6, 0.09, 0.3, IM.base);
+        if (y0 + h >= IH - 0.01) { add2(0.42, 0.16, IH - y0 - 0.21, IM.crown); add2(0.12, 0.26, IH - y0 - 0.5, IM.crown); } });
+    }
+    return o;
   }
   const ROOMDEF = {
     1: [[30, 38, 82, 90, 'paper', 'coffer'], [82, 38, 106, 64, 'rose', 'plaster'], [82, 64, 106, 90, 'floral', 'plaster'], [0, 38, 30, 90, 'decrepit', 'stained'], [0, 30, 150, 38, 'yellow', 'beams'],
@@ -513,6 +523,11 @@ const V3 = {};
             if (Math.random() < 0.9) drape(p, horiz ? vx : vx + off * 0.8, horiz ? vz + off * 0.8 : vz, horiz, 0, top - o.sill - 0.3, len - 0.4, IM.sheer, o.sill + 0.2).scale.set(1, 1, 0.4);
           }
         }
+        // 门窗套：两面各一圈木框，门窗不再是墙上直接挖的洞
+        { const cas = IM.wood('#2e1a0e'), top2 = o.win ? 7.8 : 7.4, bot = o.win ? o.sill : 0, L = o.e - o.s;
+          [-1, 1].forEach(sd => { const off = sd * (t / 2 + 0.05);
+            [o.s - 0.18, o.e + 0.18].forEach(q => { const [jx, jz] = at(q); M.box(p, horiz ? 0.36 : 0.1, top2 - bot + 0.18, horiz ? 0.1 : 0.36, horiz ? jx : jx + off, bot, horiz ? jz + off : jz, cas); });
+            const [hx, hz] = at((o.s + o.e) / 2); M.box(p, horiz ? L + 0.72 : 0.12, 0.34, horiz ? 0.12 : L + 0.72, horiz ? hx : hx + off, top2, horiz ? hz + off : hz, cas); }); }
         cur = o.e;
       });
       seg(cur, end, 0, IH);
@@ -720,7 +735,7 @@ const V3 = {};
     };
     keep.desk = M.desk;
     M.desk = (p, x, z, w, d, h = 2.6, ry = 0) => {          // 民国写字台：两侧抽屉柜，中间空膛
-      const g = M.group(p, x, 0, z, ry), m = W('#4a2a18'), m2 = W('#2e180c'), pw = Math.min(3.2, w * 0.3);
+      const g = M.group(p, x, 0, z, ry), m = W('#5a3420'), m2 = W('#4a2814'), pw = Math.min(3.2, w * 0.3);
       add(g, new THREE.BoxGeometry(w + 0.3, 0.22, d + 0.3), m2, 0, h - 0.11, 0);
       add(g, new THREE.BoxGeometry(w, 0.12, d), m, 0, h - 0.28, 0);
       [-1, 1].forEach(sd => { const cx = sd * (w / 2 - pw / 2);
@@ -781,7 +796,7 @@ const V3 = {};
           ['upper_armL', { d: [0.75, -0.3, -0.4] }], ['forearmL', { d: [0.1, -0.02, 1] }], ['upper_armR', { d: [0.8, -0.3, 0.45] }], ['forearmR', { d: [1, -0.02, -0.05] }], ['handR', { d: [1, -0.1, 0] }]];
         POSE.forEach(([k, v]) => D(k, v)); m.updateMatrixWorld(true);
         // 材质：皮肤 + 长衫外壳 + 头发
-        const skin = new THREE.MeshStandardMaterial({ color: 0x9c8676, roughness: 0.65 });
+        const skin = new THREE.MeshStandardMaterial({ color: 0x9c8676, roughness: 0.65 }); skin.userData.look = 'skin';
         mesh.material = skin; mesh.castShadow = mesh.receiveShadow = true;
         const geo = mesh.geometry, pos = geo.attributes.position, nor = geo.attributes.normal, si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight;
         const names = mesh.skeleton.bones.map(b => b.name), bare = new Set(names.map((n, i) => /^(spine005|hand|f_|thumb)/.test(n) ? i : -1).filter(i => i >= 0));
@@ -898,7 +913,7 @@ const V3 = {};
             g.strokeStyle = 'rgba(150,110,60,.35)'; g.lineWidth = u * 0.06; g.beginPath(); g.arc(x + cwi / 2, y + chi / 2, Math.min(cwi, chi) * 0.16, 0, 7); g.stroke(); } }
       })); };
     (ROOMDEF[f] || []).forEach(([x0, z0, x1, z1, wall, kind]) => {
-      const w = x1 - x0, d = z1 - z0, pl = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.2, d - 0.2), new THREE.MeshStandardMaterial({ map: tex(kind, w, d), roughness: 0.95 }));
+      const w = x1 - x0, d = z1 - z0, pl = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.2, d - 0.2), new THREE.MeshStandardMaterial({ map: tex(kind, w, d), roughness: 0.97, color: 0xa49a8c, bumpMap: LOOK.tex('plaster').bump, bumpScale: 0.02 }));
       pl.rotation.x = Math.PI / 2; pl.position.set((x0 + x1) / 2, y0, (z0 + z1) / 2); pl.receiveShadow = true; s.add(pl);
       // 灯盘：石膏圆花
       if (kind === 'plaster' || kind === 'coffer') LIGHTS.filter(([lx, lz]) => lx > x0 && lx < x1 && lz > z0 && lz < z1).forEach(([lx, lz]) => {
@@ -1348,7 +1363,7 @@ const V3 = {};
       mk(g, new THREE.CylinderGeometry(0.04, 0.04, 1.1, 8), IM.brass, 0, 0.7, 0);
       mk(g, new THREE.CylinderGeometry(0.03, 0.03, 0.5, 8), IM.brass, 0, 1.25, 0).rotation.x = Math.PI / 2;
       const sh = mk(g, new THREE.CylinderGeometry(0.62, 0.62, 1.3, 24, 1, true, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0x1f5a34, emissive: 0x1c4a24, emissiveIntensity: 0.35, roughness: 0.15, side: THREE.DoubleSide }), 0, 1.25, 0);
-      sh.rotation.z = Math.PI / 2; sh.scale.set(1, 1, 0.75);
+      sh.rotation.z = Math.PI / 2; sh.scale.set(1, 1, 0.75); sh.castShadow = false;
       mk(g, new THREE.SphereGeometry(0.16, 12, 8), new THREE.MeshStandardMaterial({ color: 0xffe2a8, emissive: 0xffc870, emissiveIntensity: 2 }), 0, 1.05, 0).castShadow = false;
     }
     { // 黑色摇把电话（三十年代座机）
@@ -1561,7 +1576,7 @@ const V3 = {};
         rest: [['upper_armL', { d: [0.05, -1, -0.15] }], ['forearmL', { d: [0.15, -1, -0.1] }], ['upper_armR', { d: [-0.1, -1, 0.35] }], ['forearmR', { d: [0.6, 0.2, -0.6] }], ['spine005', [0, 12, -5]]],
       };
       (POSES[o.pose || 'stand'] || []).forEach(([k, v]) => D(k, v)); m.updateMatrixWorld(true);
-      const skin = new THREE.MeshStandardMaterial({ color: o.skin || 0xb08a6e, roughness: 0.65 }); mesh.material = skin; mesh.castShadow = true;
+      const skin = new THREE.MeshStandardMaterial({ color: o.skin || 0xb08a6e, roughness: 0.65 }); skin.userData.look = 'skin'; mesh.material = skin; mesh.castShadow = true;
       const geo = mesh.geometry, pos = geo.attributes.position, nor = geo.attributes.normal, si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight, idx = geo.index.array;
       const names = mesh.skeleton.bones.map(b => b.name);
       const part = n => /^(spine005|spine004)/.test(n) ? 'head' : /^(hand|f_|thumb|palm)/.test(n) ? 'hand' : /^(foot|toe|heel)/.test(n) ? 'foot' : /^(thigh|shin)/.test(n) ? 'leg' : /^(upper_arm|forearm)/.test(n) ? 'arm' : 'torso';
@@ -1651,23 +1666,23 @@ const V3 = {};
   async function buildInterior(f, renderer) {
     await realTex();
     const s = new THREE.Scene();
-    s.background = new THREE.Color(0x0a0c14); s.fog = new THREE.Fog(0x0a0c14, 90, 260);
+    LOOK.fog(s, 0x0b0d14, 0.0085);
     interior(() => { if (f === 1) SCENE.buildGround(s); else SCENE.buildUpper(s); oldShop(s); }, f);
-    if (renderer && RT._env && !RT._pm) { const t = new THREE.Texture(RT._env); t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace; t.needsUpdate = true; const pm = new THREE.PMREMGenerator(renderer); RT._pm = pm.fromEquirectangular(t).texture; pm.dispose(); }
-    if (RT._pm) s.environment = RT._pm; else if (renderer && !IM.brass.envMap) IM.brass.envMap = envMap(renderer);
+    if (renderer) s.environment = LOOK.env(renderer);
     const y0 = f === 2 ? F2 : 0;
     const ce = new THREE.Mesh(new THREE.BoxGeometry(151, 0.4, 61), IM.ceil); ce.position.set(75, y0 + IH + 0.2, 60); ce.castShadow = ce.receiveShadow = true; s.add(ce);
     if (f === 1) { const c2 = new THREE.Mesh(new THREE.BoxGeometry(27, 0.4, 25), IM.ceil); c2.position.set(-23, IH + 0.2, 20); c2.castShadow = true; s.add(c2); }
     if (f === 2) M.box(s, 152, 0.3, 4, 75, y0 + IH + 0.2, 92, '#2a2420');
     { const oc = M.carpet; if (CARPET) M.carpet = CARPET; try { decorate(s, f); roomsDeco(s, f); } finally { M.carpet = oc; } } ceilings(s, f); outdoor(s, f); woodUV(s);
-    s.add(new THREE.HemisphereLight(0x7a90c8, 0x1e2026, 0.95));
-    const moon = new THREE.DirectionalLight(0x9fb4ff, 2.2);
-    moon.position.set(10, 160, 240); moon.target.position.set(75, 0, 60); moon.castShadow = true; moon.shadow.mapSize.set(2048, 2048);
-    const sc = moon.shadow.camera; sc.left = -150; sc.right = 150; sc.top = 150; sc.bottom = -150; sc.near = 10; sc.far = 500; moon.shadow.bias = -0.0006; moon.shadow.normalBias = 0.05;
-    s.add(moon, moon.target);
+    // 布光：环境光压低，暖色吊灯为主、冷色月光为辅；关键几处用带阴影的聚光
+    s.add(new THREE.HemisphereLight(0x6a7cb0, 0x2a2018, 0.5));
+    LOOK.moon(s, 75, 60, 150);
+    if (f === 1) { LOOK.keyLight(s, 57, IH - 0.8, 61, 57, 0, 61, { intensity: 230, distance: 26, angle: 1.0 }); LOOK.keyLight(s, 94, IH - 0.8, 51, 94, 0, 51, { intensity: 140, distance: 18, angle: 0.95 }); }
+    else { LOOK.keyLight(s, 71.8, y0 + 3.55, 75.9, 74.5, y0 + 2.6, 78, { intensity: 70, distance: 11, angle: 1.15, color: 0xffd9a0 }); LOOK.keyLight(s, 25, y0 + IH - 0.8, 75, 25, y0, 75, { intensity: 80, distance: 20, angle: 1.0 }); }
+    { const du = LOOK.dust(); s.add(du); s.userData.dust = du; }
     (f === 1 ? ROOMS1 : ROOMS2).forEach(([x, z]) => {
       const k = DIM[x + ',' + z] ?? 1;
-      const l = new THREE.PointLight(0xffd0a0, 95 * k, 36, 1.6); l.position.set(x, y0 + IH - 4.2, z); s.add(l);
+      const l = new THREE.PointLight(0xffc890, 58 * k, 30, 1.7); l.position.set(x, y0 + IH - 4.2, z); s.add(l);
     });
     if (f === 2) { const l = new THREE.PointLight(0xffd090, 22, 12, 1.5); l.position.set(71.8, F2 + 4.3, 75.9); s.add(l); }
     if (f === 1) {
@@ -1680,7 +1695,8 @@ const V3 = {};
       const lt2 = new THREE.PointLight(0xffa850, 40, 22, 1.6); lt2.position.set(17, 7, 21); s.add(lt2);
     }
     compress(s);
-    s.traverse(o => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.envMapIntensity !== undefined && m !== IM.brass) m.envMapIntensity = 0.32; }); });
+    LOOK.upgrade(s);
+    s.traverse(o => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.envMapIntensity !== undefined && m !== IM.brass) m.envMapIntensity = 0.55; }); });
     return s;
   }
   // 机位：look = 初始朝向点
@@ -1846,7 +1862,7 @@ const V3 = {};
     el.innerHTML = '<div class="walk-c"></div><div class="walk-l"></div><div class="walk-top"><button class="pill" data-w="back">全图</button><div class="walk-t"><b></b><small></small></div><div class="walk-i"></div></div><div class="walk-tip">拖动环视 · 点亮处可以查看</div><div class="walk-wait">正在点灯……</div><canvas class="walk-mini" width="240" height="170"></canvas>';
     const cbox = el.querySelector('.walk-c'), lbox = el.querySelector('.walk-l'), wait = el.querySelector('.walk-wait');
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(/iPhone|iPad|Android/.test(navigator.userAgent) ? 1.5 : 1.75, window.devicePixelRatio || 1));
+    LOOK.renderer(renderer, 1.08); renderer.shadowMap.autoUpdate = false;   // 场景是静的：阴影只在场景变了以后重算一次
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
     cbox.appendChild(renderer.domElement);
@@ -1861,6 +1877,7 @@ const V3 = {};
     }
     let lbl = [];
     function doorsHere() { const out = []; DOORS.forEach(d => { if (d[0] === loc) out.push({ to: d[2], vi: d[3], at: d[4], n: d[6] || '去' + rname(d[2]) }); else if (d[2] === loc) out.push({ to: d[0], vi: d[1], at: d[5], n: d[7] || '去' + rname(d[0]) }); }); return out; }
+    const LV = new THREE.Vector3(), LMAXD = { sp: 30, vp: 999, door: 999 }, LPRI = { door: 0, vp: 1, sp: 2 }, LSHOWN = [], LORD = [], LPOOL = [], LCMP = (a, b) => (LPRI[a.k] - LPRI[b.k]) || (a.dist - b.dist);
     function labels() {
       if (!lbl._loc || lbl._loc !== loc + vi) {
         lbox.innerHTML = ''; lbl = [];
@@ -1869,15 +1886,15 @@ const V3 = {};
         doorsHere().forEach(o => { const d = document.createElement('button'); d.className = 'walk-go door'; d.innerHTML = `<span>${o.n} ›</span>`; d.onclick = e => { e.stopPropagation(); moveTo(o.to, o.vi); }; lbox.appendChild(d); lbl.push({ d, at: KP(o.at), k: 'door' }); });
         lbl._loc = loc + vi;
       }
-      const v = new THREE.Vector3(), MAXD = { sp: 30, vp: 999, door: 999 }, PRI = { door: 0, vp: 1, sp: 2 }, shown = [];
+      const v = LV, MAXD = LMAXD, PRI = LPRI, shown = LSHOWN; shown.length = 0;
       lbl.forEach(o => { v.set(...o.at); o.dist = v.distanceTo(pos); v.project(cam); o.x = (v.x + 1) / 2 * W; o.y = (1 - v.y) / 2 * H; o.on = v.z < 1 && o.x > -60 && o.x < W + 60 && o.y > -30 && o.y < H + 30; });
       // 出口（门、楼梯）和站位一律显示；查看点只显示近处的；重叠时先保出口，再保站位
       lbl.forEach(o => { o.vis = o.on && o.dist < MAXD[o.k]; });
-      lbl.filter(o => o.vis).sort((a, b) => (PRI[a.k] - PRI[b.k]) || (a.dist - b.dist)).forEach(o => { const sc = Math.max(0.75, Math.min(1.15, 26 / o.dist)), w = (o.k === 'sp' ? 70 : 96) * sc, h = 30 * sc; o.sc = sc;
+      LORD.length = 0; for (let i = 0; i < lbl.length; i++) if (lbl[i].vis) LORD.push(lbl[i]); LORD.sort(LCMP); LORD.forEach(o => { const sc = Math.max(0.75, Math.min(1.15, 26 / o.dist)), w = (o.k === 'sp' ? 70 : 96) * sc, h = 30 * sc; o.sc = sc;
         let hit = shown.find(r => Math.abs(r.x - o.x) < (r.w + w) / 2 && Math.abs(r.y - o.y) < (r.h + h) / 2);
         if (hit && o.k !== 'sp') { o.y = hit.y + (hit.h + h) / 2 + 2; hit = shown.find(r => Math.abs(r.x - o.x) < (r.w + w) / 2 && Math.abs(r.y - o.y) < (r.h + h) / 2); if (hit) o.y = hit.y - (hit.h + h) - 4; }
         else if (hit) { o.vis = false; return; }
-        shown.push({ x: o.x, y: o.y, w, h }); });
+        const r = LPOOL[shown.length] || (LPOOL[shown.length] = {}); r.x = o.x; r.y = o.y; r.w = w; r.h = h; shown.push(r); });
       lbl.forEach(o => {
         o.d.style.display = o.vis ? '' : 'none';
         if (o.vis) o.d.style.transform = `translate(${o.x.toFixed(1)}px,${o.y.toFixed(1)}px) translate(-50%,-50%) scale(${o.sc.toFixed(2)})`;
@@ -1886,24 +1903,30 @@ const V3 = {};
     }
     // 小地图：本层各屋轮廓，当前屋点亮，红点是自己，短线是朝向
     const mini = el.querySelector('.walk-mini'), mg = mini.getContext('2d');
+    const MINI = {};
     function drawMini() {
-      const fl = vps[vi] ? vps[vi].f : 1, rooms = (HOT[fl] || []).filter(r => r.box), W2 = mini.width, H2 = mini.height;
-      const x0 = Math.min(...rooms.map(r => r.box[0])), x1 = Math.max(...rooms.map(r => r.box[2])), z0 = Math.min(...rooms.map(r => r.box[1])), z1 = Math.max(...rooms.map(r => r.box[3]));
-      const sc = Math.min((W2 - 12) / (x1 - x0), (H2 - 12) / (z1 - z0)), ox = (W2 - (x1 - x0) * sc) / 2, oz = (H2 - (z1 - z0) * sc) / 2, P = (x, z) => [ox + (x - x0) * sc, oz + (z - z0) * sc];
+      const fl = vps[vi] ? vps[vi].f : 1, W2 = mini.width, H2 = mini.height;
+      const C = MINI[fl] || (MINI[fl] = (() => { const rooms = (HOT[fl] || []).filter(r => r.box); const x0 = Math.min(...rooms.map(r => r.box[0])), x1 = Math.max(...rooms.map(r => r.box[2])), z0 = Math.min(...rooms.map(r => r.box[1])), z1 = Math.max(...rooms.map(r => r.box[3]));
+        const sc = Math.min((W2 - 12) / (x1 - x0), (H2 - 12) / (z1 - z0)); return { rooms, x0, z0, sc, ox: (W2 - (x1 - x0) * sc) / 2, oz: (H2 - (z1 - z0) * sc) / 2 }; })());
+      const rooms = C.rooms, x0 = C.x0, z0 = C.z0, sc = C.sc, ox = C.ox, oz = C.oz;
       mg.clearRect(0, 0, W2, H2); mg.fillStyle = 'rgba(12,9,6,.72)'; mg.fillRect(0, 0, W2, H2);
-      rooms.forEach(r => { const [a, b] = P(r.box[0], r.box[1]), [c, d] = P(r.box[2], r.box[3]); const me = r.loc === loc;
-        mg.fillStyle = me ? 'rgba(200,150,70,.45)' : 'rgba(255,240,210,.06)'; mg.fillRect(a, b, c - a, d - b); mg.strokeStyle = me ? '#e8b85a' : 'rgba(220,200,160,.35)'; mg.lineWidth = me ? 2 : 1; mg.strokeRect(a + 0.5, b + 0.5, c - a - 1, d - b - 1); });
-      const [px, pz] = P(pos.x / K, pos.z / K); mg.strokeStyle = '#ff8a6a'; mg.lineWidth = 2; mg.beginPath(); mg.moveTo(px, pz); mg.lineTo(px + Math.sin(yaw) * 14, pz + Math.cos(yaw) * 14); mg.stroke();
+      for (let i = 0; i < rooms.length; i++) { const r = rooms[i], a = ox + (r.box[0] - x0) * sc, b = oz + (r.box[1] - z0) * sc, c = ox + (r.box[2] - x0) * sc, d = oz + (r.box[3] - z0) * sc, me = r.loc === loc;
+        mg.fillStyle = me ? 'rgba(200,150,70,.45)' : 'rgba(255,240,210,.06)'; mg.fillRect(a, b, c - a, d - b); mg.strokeStyle = me ? '#e8b85a' : 'rgba(220,200,160,.35)'; mg.lineWidth = me ? 2 : 1; mg.strokeRect(a + 0.5, b + 0.5, c - a - 1, d - b - 1); }
+      const px = ox + (pos.x / K - x0) * sc, pz = oz + (pos.z / K - z0) * sc; mg.strokeStyle = '#ff8a6a'; mg.lineWidth = 2; mg.beginPath(); mg.moveTo(px, pz); mg.lineTo(px + Math.sin(yaw) * 14, pz + Math.cos(yaw) * 14); mg.stroke();
       mg.fillStyle = '#ff5a3a'; mg.beginPath(); mg.arc(px, pz, 4, 0, 7); mg.fill();
     }
     function frame() {
       if (!el.isConnected) { raf = 0; return; }
       raf = requestAnimationFrame(frame);
       if (tw) { const t = Math.min(1, (performance.now() - tw.t0) / 700), e = t * t * (3 - 2 * t); pos.lerpVectors(tw.a, tw.b, e); yaw = tw.y0 + (tw.y1 - tw.y0) * e; if (t >= 1) tw = null; need = true; }
+      const now = performance.now();
+      if (upAt && cur && now - upAt > 400) { upAt = 0; LOOK.upgrade(cur); renderer.shadowMap.needsUpdate = true; need = true; }          // 新载入的模型、人物也补上材质
+      if (DUST_MS && cur && cur.userData.dust && now - lastDust > DUST_MS) { lastDust = now; cur.userData.dust.userData.tick(now / 1000, cam, floor === 2 ? F2 : 0); need = true; }   // 浮尘约 30 帧
       if (!need || !cur) return; need = false; place(); renderer.render(cur, cam); labels(); drawMini();
     }
-    let raf = 0;
-    V3.onModel = () => { need = true; };
+    let raf = 0, lastDust = 0;
+    const DUST_MS = /nodust/.test(location.search) ? 0 : (LOOK.mobile ? 66 : 40);   // 浮尘刷新：电脑约 25 帧，手机约 15 帧
+    let upAt = 0; V3.onModel = () => { need = true; upAt = performance.now(); };
     function yawTo(v, x, z) { return Math.atan2((x - v.at[0]) * K, (z - v.at[1]) * K); }
     function go(i, instant) {
       vi = i; const v = vps[i], p = new THREE.Vector3(v.at[0] * K, (v.f === 2 ? F2 : 0) + EYE, v.at[1] * K);
@@ -1920,7 +1943,7 @@ const V3 = {};
       if (changed && self.onRoom) self.onRoom(l);
       const idx = list.indexOf(v);
       if (floor === v.f && cur && !instant) { go(idx); return; }
-      const start = () => { cur = scenes[v.f]; floor = v.f; wait.style.display = 'none'; busy = false; go(idx, true); need = true; };
+      const start = () => { cur = scenes[v.f]; floor = v.f; renderer.shadowMap.needsUpdate = true; wait.style.display = 'none'; busy = false; go(idx, true); need = true; };
       if (scenes[v.f]) start(); else { busy = true; wait.style.display = ''; setTimeout(async () => { scenes[v.f] = await buildInterior(v.f, renderer); start(); }, 40); }
     }
     self.enter = (l) => { if (l === loc && cur) return; moveTo(l, 0, true); };
