@@ -20,7 +20,7 @@ const $=id=>document.getElementById(id);
 const app=$('app');
 let D=null,HD=null;
 const st={role:S.get('role',null),pw:S.get('pw',null),codes:S.get('codes',[]),host:S.get('host',null),tab:'world',tries:S.get('tries',0),puzzle:S.get('puzzle',null),
- tasted:S.get('tasted',{}),found:S.get('found',[]),read:S.get('read',{}),gid:S.get('gid',null),place:S.get('place','前厅'),chat:null,draft:'',pending:[],htab:'run',room:S.get('room',''),sv:null,expect:0};
+ tasted:S.get('tasted',{}),found:S.get('found',[]),looked:S.get('looked',[]),read:S.get('read',{}),gid:S.get('gid',null),place:S.get('place','前厅'),chat:null,draft:'',pending:[],htab:'run',room:S.get('room',''),sv:null,expect:0};
 const cache={},acache={};
 const role=()=>D.roles.find(r=>r.id===st.role);
 const roleName=id=>(D.roles.find(r=>r.id===id)||{}).name||'';
@@ -138,7 +138,7 @@ function onHost(d){if(!d||typeof d!=='object')return;
   if(st.expect&&fresh.length){st.expect=0;render();showCard(fresh[fresh.length-1].id);return}
   if((d.vote||d.tally)&&before!==d.phase)st.tab='vote';
   render()}}
-function wipe(){st.codes=[];st.found=[];st.tries=0;st.puzzle=null;st.tasted={};st.read={};st.chat=null;st.place='前厅';
+function wipe(){st.codes=[];st.found=[];st.looked=[];S.set('looked',[]);st.tries=0;st.puzzle=null;st.tasted={};st.read={};st.chat=null;st.place='前厅';
  ['codes','found','tries','puzzle','tasted','read','pz2','place'].forEach(k=>{try{localStorage.removeItem('hcj:'+k)}catch(e){}});
  Object.keys(cache).forEach(k=>delete cache[k]);Object.keys(acache).forEach(k=>delete acache[k]);PZ=null;PZfit=null;
  if(LOCK){try{LOCK.el.remove()}catch(e){}LOCK=null}setTimeout(()=>toast('主持人重新开了一局，你的进度已清空'),300)}
@@ -165,10 +165,8 @@ function pickLoc(loc,name){if(G3&&V3.canWalk(loc)){st.place=loc;S.set('place',lo
  sheet(h+`<div class="row2"><button class="btn" data-sheet="x">${can?'算了':'知道了'}</button>${can?'<button class="btn red" data-sheet="go">搜这里</button>':''}</div>`,k=>{if(k==='go'&&send({t:'search',loc}))st.expect=1})}
 function walkInfo(){if(!WALK)return;const sv=st.sv;WALK.info(sv&&sv.search?`行动点 ${sv.ap}`:(sv&&sv.phase===EXPLORE&&WALK.loc()==='书房'?'勘查现场':''));
  WALK.sub(`<span class="dot ${P.on?'on':''}"></span>${sv?esc(PH[sv.phase].n):(P.on?'已连上主持人':'未连上主持人')}`);WALK.refresh()}
-function spotState(loc,sp){const sv=st.sv;if(!sv)return '';
- if(sv.phase===EXPLORE&&loc==='书房'&&sp.r1)return sp.r1.every(id=>st.found.includes(id))?'done':'r1';
- if(sv.search&&sp.r2)return sp.r2.some(id=>!sv.taken.includes(id))?'can':'done';return ''}
-function spotTap(loc,sp){const sv=st.sv;const say=(h,btn)=>sheet(`<h3>${esc(sp.n)}</h3>${h}<div class="row2"><button class="btn" data-sheet="x">${btn?'算了':'知道了'}</button>${btn?`<button class="btn red" data-sheet="go">${btn}</button>`:''}</div>`,k=>{if(k==='go')go()});
+function spotState(loc,sp){return (st.looked||[]).includes(loc+'|'+sp.n)?'done':''}  // 不提示哪里有线索，只标出自己看过的地方
+function spotTap(loc,sp){const sv=st.sv;{const k=loc+'|'+sp.n;st.looked=st.looked||[];if(!st.looked.includes(k)){st.looked.push(k);S.set('looked',st.looked)}if(WALK)WALK.refresh()}const say=(h,btn)=>sheet(`<h3>${esc(sp.n)}</h3>${h}<div class="row2"><button class="btn" data-sheet="x">${btn?'算了':'知道了'}</button>${btn?`<button class="btn red" data-sheet="go">${btn}</button>`:''}</div>`,k=>{if(k==='go')go()});
  let go=()=>{};
  if(sv&&sv.phase===EXPLORE&&loc==='书房'&&sp.r1){const ids=sp.r1;const nw=ids.filter(id=>!st.found.includes(id));st.found.push(...nw);S.set('found',st.found);
   if(nw.length){toast(`记下了 ${nw.length} 张线索`);render();WALK.refresh();showCard(nw[0]);return}
