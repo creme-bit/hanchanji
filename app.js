@@ -20,7 +20,7 @@ const $=id=>document.getElementById(id);
 const app=$('app');
 let D=null,HD=null;
 const st={role:S.get('role',null),pw:S.get('pw',null),codes:S.get('codes',[]),host:S.get('host',null),tab:'world',tries:S.get('tries',0),puzzle:S.get('puzzle',null),
- tasted:S.get('tasted',{}),found:S.get('found',[]),read:S.get('read',{}),gid:S.get('gid',null),place:S.get('place','前厅'),chat:null,draft:'',htab:'run',room:S.get('room',''),sv:null,expect:0};
+ tasted:S.get('tasted',{}),found:S.get('found',[]),read:S.get('read',{}),gid:S.get('gid',null),place:S.get('place','前厅'),chat:null,draft:'',pending:[],htab:'run',room:S.get('room',''),sv:null,expect:0};
 const cache={},acache={};
 const role=()=>D.roles.find(r=>r.id===st.role);
 const roleName=id=>(D.roles.find(r=>r.id===id)||{}).name||'';
@@ -48,7 +48,7 @@ function tryCode(code){code=String(code).trim();if(!code)return {msg:'请输入�
 /* ======================= 阶段 ======================= */
 const PH=[{n:'开场'},{n:'读本'},{n:'自我介绍'},{n:'第一轮 · 勘查现场',pub:'r1'},{n:'第二轮 · 搜证一',ap:3,search:1},{n:'第二轮 · 讨论'},
  {n:'第二轮 · 搜证二',ap:2,search:1},{n:'子时 · 开铁盒',pub:'box'},{n:'第三轮 · 破局',pub:'r3'},{n:'自清'},{n:'最后陈述'},{n:'投票',vote:1},{n:'复盘',reveal:1}];
-const EXPLORE=3;
+const EXPLORE=3;const APPV=5;
 const GAMES=[{k:'lock',n:'铁盒铜锁',need:'R1-09',tip:'第一轮结束后发布；也可以等有人拿到 R2-14 再发'},{k:'letter',n:'拼残信',need:'R1-08',tip:'第一轮里发布，让找到纸篓的人去拼'},
  {k:'powder',n:'药粉比对',tip:'搜证一开始后发布，有样本的人才能尝'},{k:'mazi',n:'商号码子',need:'R3-06',tip:'第三轮发出小册子以后发布'}];
 const R1REL=[['R1-10','开场时说过各人门下都有一封信，把信的样子给大家看'],['R1-11','把下人叫来问话，他们说了这些'],['R1-12','问起后院，老下人说起那口井'],
@@ -73,12 +73,12 @@ function stateFor(role){const s=H.s,ph=PH[s.phase];
  const mine=Object.entries(s.ledger).filter(([,r])=>r===role).map(([id])=>HD.codes[id]);
  const msgs=s.msgs.filter(m=>m.to==='all'||m.to===role||m.from===role).map(m=>Object.assign({},m,m.card&&m.from!==role?{code:HD.codes[m.card]}:{}));
  return {t:'state',phase:s.phase,pub:s.pub,mine,ap:s.ap[role]??0,search:!!ph.search,vote:!!ph.vote,myVote:s.votes[role]||null,tally:ph.reveal?tallyVotes():null,
-  taken:Object.keys(s.ledger),persons:Object.keys(s.persons),games:s.games,r1rel:s.r1rel,msgs,gid:s.gid}}
+  taken:Object.keys(s.ledger),persons:Object.keys(s.persons),games:s.games,r1rel:s.r1rel,msgs,gid:s.gid,v:APPV}}
 function push(role){connOf(role).forEach(x=>{try{x.c.send(stateFor(role))}catch(e){}})}
 function pushAll(){hsSave();[...H.conns.values()].forEach(x=>{if(x.role)try{x.c.send(stateFor(x.role))}catch(e){}});render()}
 const DEEP={'R2-10':'R2-09'};
 function hostMsg(c,d){const x=H.conns.get(c.peer);if(!x||!d||typeof d!=='object')return;
- if(d.t==='hello'&&D.roles.some(r=>r.id===d.role)){x.role=d.role;push(d.role);render();return}
+ if(d.t==='hello'&&D.roles.some(r=>r.id===d.role)){x.role=d.role;x.v=d.v||0;push(d.role);render();return}
  const who=x.role;if(!who)return;const s=H.s,ph=PH[s.phase];
  if(d.t==='search'){if(!ph.search)return tell(c,'现在不是搜证时间');
   if(d.person){const pid=HD.persons[roleName(d.person)];if((s.ap[who]??0)<2)return tell(c,'行动点不够（搜人要 2 点）');
@@ -93,6 +93,7 @@ function hostMsg(c,d){const x=H.conns.get(c.peer);if(!x||!d||typeof d!=='object'
   s.ap[who]-=1;
   if(!next){s.log.unshift(`${roleName(who)} 搜了 ${d.loc}，没东西了`);tell(c,'这里已经有人来过了，什么也没找到');pushAll();return}
   s.ledger[next.id]=who;s.log.unshift(`${roleName(who)} 搜 ${d.loc} → ${next.id} ${HD.titles[next.id]}`);pushAll();return}
+ if(d.t==='share'&&d.id){d={t:'chat',to:d.to==='all'?'all':(Array.isArray(d.to)?d.to[0]:d.to),card:d.id,text:d.note||''}}
  if(d.t==='chat'){const to=d.to==='all'?'all':(D.roles.some(q=>q.id===d.to)&&d.to!==who?d.to:null);if(!to)return;
   const card=d.card&&cardById(d.card)&&HD.codes[d.card]?d.card:null,text=String(d.text||'').slice(0,300).trim();if(!card&&!text)return;
   s.msgs.push({i:s.msgs.length+1,from:who,to,text,card,t:Date.now()});
@@ -118,7 +119,7 @@ function joinRoom(){if(!st.room||!st.role||P.peer)return;if(typeof Peer==='undef
  P.peer.on('error',e=>{if(e.type==='peer-unavailable'){P.on=false;render();retry()}});
  P.peer.on('disconnected',()=>{setTimeout(()=>P.peer&&!P.peer.destroyed&&P.peer.reconnect(),2000)})}
 function dial(){const c=P.peer.connect('hanchanji-'+st.room,{reliable:true});P.conn=c;
- c.on('open',()=>{P.on=true;c.send({t:'hello',role:st.role});render()});
+ c.on('open',()=>{P.on=true;c.send({t:'hello',role:st.role,v:APPV});render()});
  c.on('data',onHost);c.on('close',()=>{P.on=false;render();retry()})}
 function retry(){clearTimeout(P.timer);P.timer=setTimeout(()=>{if(P.peer&&!P.peer.destroyed&&!P.on)dial()},4000)}
 function leaveRoom(){try{P.peer&&P.peer.destroy()}catch(e){}P.peer=null;P.on=false}
@@ -127,6 +128,7 @@ function onHost(d){if(!d||typeof d!=='object')return;
  if(d.t==='state'){
   if(d.gid&&st.gid&&d.gid!==st.gid)wipe();if(d.gid&&d.gid!==st.gid){st.gid=d.gid;S.set('gid',d.gid)}
   const oldN=st.sv?(st.sv.msgs||[]).length:null;
+  st.pending=st.pending.filter(p=>!(d.msgs||[]).some(m=>m.from===st.role&&m.to===p.to&&m.text===p.text&&(m.card||null)===(p.card||null)&&m.t>=p.t-60000));
   const before=st.sv?st.sv.phase:null,had=new Set(D.cards.filter(c=>card(c)).map(c=>c.id));st.sv=d;let a3=false;
   if(oldN!==null)(d.msgs||[]).slice(oldN).forEach(m=>{if(m.from!==st.role&&!(st.tab==='msg'&&st.chat===ckey(m)))toast(`${roleName(m.from)}${m.to==='all'?'（对所有人）':''}：${m.text||'给你看了一张线索'}`)});
   [...(d.pub||[]),...(d.mine||[]),...(d.msgs||[]).map(x=>x.code)].forEach(code=>{if(code&&!st.codes.includes(String(code))){const r=tryCode(code);a3=a3||r.a3}});
@@ -200,11 +202,13 @@ function login(rid){useStage('home');const r=D.roles.find(x=>x.id===rid);app.inn
  $('pwgo').onclick=go}
 
 /* ======================= 页面：玩家 ======================= */
-function phaseBar(){const sv=st.sv;return `<div class="phase"><span><span class="dot ${P.on?'on':''}"></span>${P.on?'已连上主持人':(st.room?'正在连接房间 '+esc(st.room):'未加入房间')}</span>${sv?`<b>${esc(PH[sv.phase].n)}</b>`:''}</div>`}
+function phaseBar(){const sv=st.sv;return (sv&&(sv.v||0)!==APPV?`<div class="warn">${(sv.v||0)>APPV?'你的网页是旧版本，请刷新一下页面':'主持人的网页是旧版本，请主持人刷新一下页面'}</div>`:'')+`<div class="phase"><span><span class="dot ${P.on?'on':''}"></span>${P.on?'已连上主持人':(st.room?'正在连接房间 '+esc(st.room):'未加入房间')}</span>${sv?`<b>${esc(PH[sv.phase].n)}</b>`:''}</div>`}
 function ckey(m){return m.to==='all'?'all':(m.from===st.role?m.to:m.from)}
 function unreadOf(k){const ms=((st.sv&&st.sv.msgs)||[]).filter(m=>ckey(m)===k&&m.from!==st.role);return Math.max(0,ms.length-(st.read[k]||0))}
 function unreadAll(){return ['all',...D.roles.map(r=>r.id)].reduce((n,k)=>n+(k===st.role?0:unreadOf(k)),0)}
 function player(){const r=role(),sv=st.sv;
+ if(st.tab==='msg'&&st.chat&&app.dataset.chat===st.chat&&$('chatbox')&&$('chatin')){softChat();return}
+ app.dataset.chat=st.tab==='msg'&&st.chat?st.chat:'';
  const tabs=[['book','本','本子'],['clue','线','线索'],['world','館','公馆'],['game','机','机关'],['msg','信','交流']];
  if(sv&&(sv.vote||sv.tally))tabs.push(['vote','票','投票']);
  if(!tabs.some(t=>t[0]===st.tab))st.tab='world';
@@ -245,23 +249,34 @@ function msgList(){const sv=st.sv;if(!sv)return '<p class="fine">连上主持人
  const keys=['all',...D.roles.filter(r=>r.id!==st.role).map(r=>r.id)].sort((a,b)=>a==='all'?-1:b==='all'?1:((last(b)||{}).t||0)-((last(a)||{}).t||0));
  return `<div class="grp">交流<small>点一个人进入私聊</small></div>`+keys.map(k=>{const l=last(k),u=unreadOf(k);const prev=l?`${l.from===st.role?'我：':(k==='all'?roleName(l.from)+'：':'')}${l.text||'［线索］'+(l.card||'')}`:(k==='all'?'说给所有人听的话':'');
   return `<div class="row convo" data-chat="${k}"><span class="av">${k==='all'?'众':esc(roleName(k)[0])}</span><span class="t">${k==='all'?'所有人':esc(roleName(k))}<small>${esc(prev)}</small></span>${u?`<em class="badge">${u}</em>`:'›'}</div>`}).join('')}
-function chatView(){const sv=st.sv,k=st.chat;const ms=((sv&&sv.msgs)||[]).filter(m=>ckey(m)===k);
+function chatMsgs(){const sv=st.sv,k=st.chat;const ms=((sv&&sv.msgs)||[]).filter(m=>ckey(m)===k);
  st.read[k]=ms.filter(m=>m.from!==st.role).length;S.set('read',st.read);
- const bub=m=>{const me=m.from===st.role,c=m.card&&cardById(m.card),x=c&&card(c);
-  return `<div class="msg-row ${me?'me':''}">${k==='all'&&!me?`<span class="nm">${esc(roleName(m.from))}</span>`:''}<div class="bub">${m.card?`<div class="cchip" data-card="${m.card}"><i>${c&&c.loc==='随身物品'?'身':STAMP[c?c.round:2]}</i><span>${m.card}<b>${esc(x?x.title:'')}</b></span></div>`:''}${m.text?`<p>${esc(m.text)}</p>`:''}</div></div>`};
+ const bub=(m,pend)=>{const me=m.from===st.role,c=m.card&&cardById(m.card),x=c&&card(c);
+  return `<div class="msg-row ${me?'me':''} ${pend?(pend==='fail'?'fail':'pend'):''}">${k==='all'&&!me?`<span class="nm">${esc(roleName(m.from))}</span>`:''}<div class="bub">${m.card?`<div class="cchip" data-card="${m.card}"><i>${c&&c.loc==='随身物品'?'身':STAMP[c?c.round:2]}</i><span>${m.card}<b>${esc(x?x.title:'')}</b></span></div>`:''}${m.text?`<p>${esc(m.text)}</p>`:''}</div>${pend==='fail'?`<button class="retry" data-retry="${m.t}">没发出去，点这里重发</button>`:pend?'<span class="nm">发送中…</span>':''}</div>`};
+ const pend=st.pending.filter(p=>p.to===k).map(p=>bub(Object.assign({from:st.role},p),Date.now()-p.t>6000?'fail':'pend'));
+ return (ms.map(m=>bub(m)).join('')+pend.join(''))||'<p class="fine" style="text-align:center;margin-top:40px">还没有说过话</p>'}
+function chatView(){const k=st.chat;
  return `<div class="chat-h"><button class="pill" id="chatback">‹ 返回</button><b>${k==='all'?'所有人':esc(roleName(k))}</b><span class="fine">${k==='all'?'所有人都看得到':'只有你们两个看得到'}</span></div>
- <div class="chat" id="chatbox">${ms.map(bub).join('')||'<p class="fine" style="text-align:center;margin-top:40px">还没有说过话</p>'}</div>
- <div class="composer"><button class="pill" id="chatcard">线索</button><input id="chatin" maxlength="300" placeholder="说点什么" autocomplete="off"><button class="pill send" id="chatsend">发送</button></div>`}
+ <div class="chat" id="chatbox">${chatMsgs()}</div>
+ <div class="composer"><button class="pill" id="chatcard">线索</button><input id="chatin" maxlength="300" placeholder="说点什么" autocomplete="off" enterkeyhint="send"><button class="pill send" id="chatsend">发送</button></div>`}
+function softChat(){const box=$('chatbox');const atEnd=window.innerHeight+scrollY>=document.body.scrollHeight-80;box.innerHTML=chatMsgs();bindRetry();
+ const ph=app.querySelector('.phase');if(ph)ph.outerHTML=phaseBar();
+ const un=unreadAll(),nb=app.querySelector('[data-tab=msg]');if(nb){const em=nb.querySelector('em');if(un){if(em)em.textContent=un;else nb.insertAdjacentHTML('beforeend',`<em>${un}</em>`)}else if(em)em.remove()}
+ if(atEnd)scrollTo(0,document.body.scrollHeight)}
+function chatSend(o){const p=Object.assign({t:Date.now()},o);st.pending.push(p);if(!send(Object.assign({t:'chat'},o)))p.t=0;render();scrollTo(0,document.body.scrollHeight);
+ setTimeout(()=>{if(st.pending.includes(p))render()},6500)}
+function bindRetry(){app.querySelectorAll('[data-retry]').forEach(b=>b.onclick=()=>{const p=st.pending.find(x=>String(x.t)===b.dataset.retry);if(!p)return;st.pending=st.pending.filter(x=>x!==p);chatSend({to:p.to,text:p.text,card:p.card})})}
 function bindChat(focus){
  app.querySelectorAll('[data-chat]').forEach(b=>b.onclick=()=>{st.chat=b.dataset.chat;render();scrollTo(0,document.body.scrollHeight)});
  const bk=$('chatback');if(bk)bk.onclick=()=>{st.chat=null;render()};
  const inp=$('chatin');if(!inp)return;inp.value=st.draft||'';if(focus)inp.focus();
  const box=$('chatbox');if(box)scrollTo(0,document.body.scrollHeight);
- const go=()=>{const t=inp.value.trim();if(!t)return;if(send({t:'chat',to:st.chat,text:t})){inp.value='';st.draft=''}};
- $('chatsend').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();go()}};
+ bindRetry();
+ const go=()=>{const t=inp.value.trim();if(!t)return;inp.value='';st.draft='';chatSend({to:st.chat,text:t});const i2=$('chatin');if(i2)i2.focus()};
+ $('chatsend').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){e.preventDefault();go()}};
  $('chatcard').onclick=()=>{const own=D.cards.filter(c=>!c.public&&visible(c));
   sheet(`<h3>给${st.chat==='all'?'所有人':esc(roleName(st.chat))}看哪张？</h3><div style="max-height:52vh;overflow:auto">${own.map(c=>`<div class="row" data-pickcard="${c.id}"><span class="id">${c.id}</span><span class="t">${esc(card(c).title)}<small>${esc(c.loc||'')}</small></span>›</div>`).join('')||'<p class="fine">你手里还没有线索卡</p>'}</div><div class="row2"><button class="btn" data-sheet="x">算了</button></div>`);
-  $('sheet').querySelectorAll('[data-pickcard]').forEach(r=>r.onclick=()=>{$('sheet').classList.remove('on');const t=inp.value.trim();if(send({t:'chat',to:st.chat,card:r.dataset.pickcard,text:t})){inp.value='';st.draft=''}})}}
+  $('sheet').querySelectorAll('[data-pickcard]').forEach(r=>r.onclick=()=>{$('sheet').classList.remove('on');const t=inp.value.trim();inp.value='';st.draft='';chatSend({to:st.chat,card:r.dataset.pickcard,text:t})})}}
 function voteView(){const sv=st.sv;if(!sv)return '';
  if(sv.vote){const mv=sv.myVote||{};const sel=(k)=>`<select id="v${k}" style="max-width:none;width:100%"><option value="">请选择</option>${D.roles.map(x=>`<option value="${x.id}" ${mv[k]===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}<option value="none" ${mv[k]==='none'?'selected':''}>没有人 / 不知道</option></select>`;
   return `<div class="grp">投票</div><p>第一票：谁杀了沈伯衡？</p>${sel('a')}<p>第二票：谁往尸体上扎了那一刀？</p>${sel('b')}<p>加分题：沈鹤年是谁杀的？</p>${sel('c')}<button class="btn red" id="vote">${sv.myVote?'改票':'投出'}</button><p class="fine">主持人开票前都可以改。</p>`}
@@ -295,7 +310,7 @@ function shareSheet(id){const others=D.roles.filter(r=>r.id!==st.role);
  sheet(`<h3>把 ${id} 给谁看？</h3><p class="fine">会发到你们的私聊里，可以接着说话。</p><div class="pick">${others.map(r=>`<label><input type="radio" name="to" value="${r.id}"> ${esc(r.name)}</label>`).join('')}<label class="all"><input type="radio" name="to" value="all"> 所有人</label></div>
  <input id="note" class="note-in" maxlength="300" placeholder="附一句话（可不填）"><div class="row2"><button class="btn" data-sheet="x">算了</button><button class="btn red" data-sheet="go">发过去</button></div>`,(k,el)=>{
   if(k!=='go')return;const v=el.querySelector('input[name=to]:checked');if(!v)return toast('没选人');
-  if(send({t:'chat',to:v.value,card:id,text:el.querySelector('#note').value.trim()})){modal.classList.remove('on');st.tab='msg';st.chat=v.value;render()}})}
+  modal.classList.remove('on');st.tab='msg';st.chat=v.value;chatSend({to:v.value,card:id,text:el.querySelector('#note').value.trim()})})}
 function showImg(title,src){open(title,`<div style="display:flex;gap:8px;margin-bottom:8px"><button class="pill" data-z="1">适应</button><button class="pill" data-z="2">放大</button><button class="pill" data-z="3">再大</button></div><div class="zoom" id="zm"><img src="${src}" alt=""></div>`)}
 function showMap(id){const m=D.maps.find(x=>x.id===id);showImg(m.name,`maps/${id}.jpg`)}
 
@@ -378,7 +393,7 @@ function host(){useStage(null);document.body.classList.remove('onmap');if(!HD)HD
   body=`<p class="fine" style="text-align:center;margin:0">房间号</p><div class="room">${H.peer&&H.peer.open?esc(st.room):'····'}</div>
   <p class="fine" style="text-align:center">${H.peer&&H.peer.open?'玩家进入时填这个房间号，或打开下面的链接':'正在开房间……'}</p>
   <p class="fine" style="text-align:center;word-break:break-all">${esc(link)}</p>
-  <div class="who-list">${D.roles.map(r=>`<span class="${online.has(r.id)?'on':''}">${esc(r.name)}</span>`).join('')}</div>
+  <div class="who-list">${D.roles.map(r=>{const old=[...H.conns.values()].some(x=>x.role===r.id&&(x.v||0)<APPV);return `<span class="${online.has(r.id)?'on':''} ${old?'old':''}">${esc(r.name)}${old?' · 请刷新':''}</span>`}).join('')}</div>
   <div class="grp">当前阶段<small>${s.phase+1} / ${PH.length}</small></div><div class="big">${esc(PH[s.phase].n)}</div>
   <div class="bar2"><button class="btn" data-ph="${s.phase-1}" style="text-align:center">上一步</button><button class="btn red" data-ph="${s.phase+1}">下一步：${esc((PH[s.phase+1]||{n:'已结束'}).n)}</button></div>
   ${s.phase>=8&&!s.pub.includes(HD.codes['R3-07'])?`<button class="btn" id="dig">全场决定挖井 → 发 R3-07 井底</button>`:''}
