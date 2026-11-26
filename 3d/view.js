@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'textures.js', 'models.js', 'scene.js']) await load('3d/' + f + (/^(models|scene|textures)/.test(f) ? '?v=14' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'textures.js', 'models.js', 'scene.js']) await load('3d/' + f + (/^(models|scene|textures)/.test(f) ? '?v=15' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -1816,14 +1816,15 @@ const V3 = {};
         doorsHere().forEach(o => { const d = document.createElement('button'); d.className = 'walk-go door'; d.innerHTML = `<span>${o.n} ›</span>`; d.onclick = e => { e.stopPropagation(); moveTo(o.to, o.vi); }; lbox.appendChild(d); lbl.push({ d, at: o.at, k: 'door' }); });
         lbl._loc = loc + vi;
       }
-      const v = new THREE.Vector3(), MAXD = { sp: 30, vp: 24, door: 26 }, shown = [];
+      const v = new THREE.Vector3(), MAXD = { sp: 30, vp: 999, door: 999 }, PRI = { door: 0, vp: 1, sp: 2 }, shown = [];
       lbl.forEach(o => { v.set(...o.at); o.dist = v.distanceTo(pos); v.project(cam); o.x = (v.x + 1) / 2 * W; o.y = (1 - v.y) / 2 * H; o.on = v.z < 1 && o.x > -60 && o.x < W + 60 && o.y > -30 && o.y < H + 30; });
-      // 远处的去处只留最近一个，免得标签挤成一团
-      const nav = lbl.filter(o => o.k !== 'sp' && o.on).sort((a, b) => a.dist - b.dist);
-      lbl.forEach(o => { o.vis = o.on && o.dist < (MAXD[o.k] || 30); });
-      if (nav.length && !nav.some(o => o.vis)) nav[0].vis = true;
-      lbl.filter(o => o.vis).sort((a, b) => a.dist - b.dist).forEach(o => { const sc = Math.max(0.75, Math.min(1.15, 26 / o.dist)), w = (o.k === 'sp' ? 70 : 96) * sc, h = 30 * sc;
-        if (shown.some(r => Math.abs(r.x - o.x) < (r.w + w) / 2 && Math.abs(r.y - o.y) < (r.h + h) / 2)) { o.vis = false; return; } shown.push({ x: o.x, y: o.y, w, h }); o.sc = sc; });
+      // 出口（门、楼梯）和站位一律显示；查看点只显示近处的；重叠时先保出口，再保站位
+      lbl.forEach(o => { o.vis = o.on && o.dist < MAXD[o.k]; });
+      lbl.filter(o => o.vis).sort((a, b) => (PRI[a.k] - PRI[b.k]) || (a.dist - b.dist)).forEach(o => { const sc = Math.max(0.75, Math.min(1.15, 26 / o.dist)), w = (o.k === 'sp' ? 70 : 96) * sc, h = 30 * sc; o.sc = sc;
+        let hit = shown.find(r => Math.abs(r.x - o.x) < (r.w + w) / 2 && Math.abs(r.y - o.y) < (r.h + h) / 2);
+        if (hit && o.k !== 'sp') { o.y = hit.y + (hit.h + h) / 2 + 2; hit = shown.find(r => Math.abs(r.x - o.x) < (r.w + w) / 2 && Math.abs(r.y - o.y) < (r.h + h) / 2); if (hit) o.y = hit.y - (hit.h + h) - 4; }
+        else if (hit) { o.vis = false; return; }
+        shown.push({ x: o.x, y: o.y, w, h }); });
       lbl.forEach(o => {
         o.d.style.display = o.vis ? '' : 'none';
         if (o.vis) o.d.style.transform = `translate(${o.x.toFixed(1)}px,${o.y.toFixed(1)}px) translate(-50%,-50%) scale(${o.sc.toFixed(2)})`;
