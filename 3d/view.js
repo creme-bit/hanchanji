@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=27' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=28' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -1754,7 +1754,7 @@ const V3 = {};
   }
   // AI 生成的人物（Meshy，CC BY 4.0）：自带贴图、Mixamo 骨骼和 idle / walk 动作
   function aiAvatar(g, o) {
-    gltfLoader.load('3d/models/ai_' + o.ai + '.glb?v=1', gl => {
+    gltfLoader.load('3d/models/ai_' + o.ai + '.glb?v=2', gl => {
       const m = gl.scene; m.updateMatrixWorld(true);
       const bb = new THREE.Box3(); m.traverse(q => { if (q.isMesh) { bb.expandByObject(q); q.frustumCulled = false; q.castShadow = !o.dyn;
         const mt = q.material; if (mt) { mt.side = THREE.FrontSide; mt.envMapIntensity = 0.6; } } });
@@ -1764,8 +1764,10 @@ const V3 = {};
         c.tracks.forEach(t => { if (/Hips\.position$/.test(t.name)) { const v = t.values; for (let i = 0; i < v.length; i += 3) { v[i] = v[0]; v[i + 2] = v[2]; } }   // 去掉原地位移，位置由游戏控制
           if (/Hips\.quaternion$/.test(t.name)) { const v = t.values, q = new THREE.Quaternion(), e = new THREE.Euler();   // 去掉整体偏转（站立动作会侧身约 45°）
             let sy = 0, cy = 0; for (let i = 0; i < v.length; i += 4) { e.setFromQuaternion(q.fromArray(v, i), 'YXZ'); sy += Math.sin(e.y); cy += Math.cos(e.y); }
-            const fix = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.atan2(sy, cy));
+            const hb = m.getObjectByName(t.name.replace(/\.quaternion$/, '')), ry = hb ? new THREE.Euler().setFromQuaternion(hb.quaternion, 'YXZ').y : 0;   // 以骨骼自己的静止朝向为准
+            const fix = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), ry - Math.atan2(sy, cy));
             for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i).premultiply(fix).toArray(v, i); } } }); });
+      aiCalm(m, gl.animations, o.swing);
       const mixer = new THREE.AnimationMixer(m), A = n => clips[n] ? mixer.clipAction(clips[n]) : null;
       const idle = A('idle'), walk = A('walk');
       if (idle) { idle.play(); idle.time = Math.random() * 3; }
@@ -1774,6 +1776,17 @@ const V3 = {};
       V3.onModel && V3.onModel();
     }, undefined, e => { console.warn('ai avatar fallback', e); const p = g.parent; if (p) { p.remove(g); } });
   }
+  // AI 模型的胳膊和身子是连在一起的：摆臂幅度收小，袖子才不会和衣身撕开（也更像那个年代的稳重步态）
+  function aiCalm(m, anims, k = 0.35) {
+    const q = new THREE.Quaternion();
+    anims.forEach(c => c.tracks.forEach(t => {
+      const mt = /(Shoulder|Arm|ForeArm|Hand)\.quaternion$/.exec(t.name); if (!mt) return;
+      const b = m.getObjectByName(t.name.replace(/\.quaternion$/, '')); if (!b) return;
+      const r = b.quaternion.clone(), v = t.values;
+      for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i); r.clone().slerp(q, k).toArray(v, i); }
+    }));
+  }
+  window.aiCalm = aiCalm;
   function figure(s, x, z, ry, robe = '#2f3a3a') {
     const g = M.group(s, x, 0, z, ry), c = M.mat(robe), sk = M.mat('#c9a688'), hr = M.mat('#1a1614');
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 1.05, 4.2, 14), c); body.position.y = 2.1; body.castShadow = true; g.add(body);
@@ -2261,9 +2274,9 @@ const V3 = {};
     }
     /* ---------- 其他玩家：人物模型 + 名牌，位置平滑插值，走路摆腿 ---------- */
     const OUTFIT = {
-      '01': { mh: 'm_mid', top: '#3a3328', vest: '#18160f', gown: 1, hat: 'gua', glasses: true }, '02': { mh: 'f_mid', top: '#cfcac0', bottom: '#2b2b30', bun: 1, h: 2.45 },
-      '03': { mh: 'm_young', top: '#2d3340', bottom: '#2d3340' }, '04': { mh: 'f_mid', top: '#4a2430', gown: 1, bun: 1, h: 2.42 },
-      '05': { mh: 'm_mid', top: '#3c3a36', vest: '#121110', gown: 1, hat: 'gua', mustache: 1 }, '06': { mh: 'm_young', top: '#2f3a44', gown: 1 },
+      '01': { ai: 'zhongheng', mh: 'm_mid', top: '#3a3328', vest: '#18160f', gown: 1, hat: 'gua', glasses: true }, '02': { ai: 'shuyi', mh: 'f_mid', top: '#cfcac0', bottom: '#2b2b30', bun: 1, h: 2.45 },
+      '03': { ai: 'jingxing', mh: 'm_young', top: '#2d3340', bottom: '#2d3340' }, '04': { ai: 'xuezhi', mh: 'f_mid', top: '#4a2430', gown: 1, bun: 1, h: 2.42 },
+      '05': { ai: 'ziqian', mh: 'm_mid', top: '#3c3a36', vest: '#121110', gown: 1, hat: 'gua', mustache: 1 }, '06': { mh: 'm_young', top: '#2f3a44', gown: 1 },
       '07': { ai: 'bailu', mh: 'f_young', top: '#7a1e2a', gown: 1, bun: 1, h: 2.42 }, '08': { mh: 'm_old', top: '#2a2622', vest: '#3a2a18', gown: 1, mustache: 1, glasses: true },
       '09': { mh: 'm_young', top: '#57503f', bottom: '#38322c', glasses: true }, '10': { mh: 'f_young', top: '#34404a', gown: 1, bun: 1, h: 2.44 },
     };
