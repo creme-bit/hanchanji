@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=32' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=33' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -1146,7 +1146,7 @@ const V3 = {};
       bench(88, 53.4, 0, 5, y); model(s, 'potted_plant_04', 104, y, 58.6, 0.3, 2.8); model(s, 'antique_ceramic_vase_01', 52, y, 53.2, 0, 3);
       // ================= 沈伯衡卧房 =================
       canopy(10, 71.5, 14, 17, 0, '#ece4d4');       washstand(27.5, y, 87.6, 0.4); model(s, 'pot_enamel_01', 19.2, y, 82.5, 0, 2.4);
-      { const g = G(46.5, y, 66.4); mk(g, lathe([[0.7, 0], [0.7, 0.08], [0.12, 0.2], [0.08, 6.4], [0.14, 6.5], [0, 6.7]], WD('#3a2010'), 14), 0, 0, 0); garment(g, 0.35, 6.0, 0.1, '#3a3a44', 4.6, 0.4); hat(46.8, y + 6.25, 66.2, '#2a2622'); }
+      { const g = G(48.6, y, 66.4); mk(g, lathe([[0.7, 0], [0.7, 0.08], [0.12, 0.2], [0.08, 6.4], [0.14, 6.5], [0, 6.7]], WD('#3a2010'), 14), 0, 0, 0); garment(g, 0.35, 6.0, 0.1, '#3a3a44', 4.6, 0.4); hat(48.9, y + 6.25, 66.2, '#2a2622'); }
       model(s, 'chinese_armchair', 30, y, 72, Math.PI / 2, 2.9); model(s, 'chinese_tea_table', 30, y, 75.5, Math.PI / 2, 3); model(s, 'tea_set_01', 30, y + 2.0, 75.5, 0, 2.2);
       { const T = y + 2.7; books(36.2, T, 81, 3, 0.3); model(s, 'vintage_oil_lamp', 44.6, T, 80.8, 0, 2.8); box(40.5, T, 81.2, 2.2, 0.15, 1.6, cloth('#e8dcc0'), 0.1); box(38.3, T, 82, 0.5, 0.5, 0.5, WD('#3a1a0c')); }
       model(s, 'brass_pot_01', 20.2, y + 2.62, 65.2, 0, 2.0); [[21, 64.6], [19.6, 64.9]].forEach(([x, z]) => mug(x, y + 2.62, z));
@@ -2070,12 +2070,12 @@ const V3 = {};
     '西头卧房（沈伯衡）': [
       { n: '床头柜', at: [20.2, 15, 64.8], r2: ['R2-05'], t: '床头柜上一只空茶碗。' },
       { n: '南窗', at: [21.5, 16.5, 89.4], r2: ['R2-05'], t: '南窗关着。' },
-      { n: '衣柜', at: [39.5, 16.5, 64.2], t: '几件长衫，口袋都是空的。' },
+      { n: '衣柜', at: [29, 16.5, 64.2], t: '几件长衫，口袋都是空的。' },
       { n: '写字台', at: [40, 15, 81.5], t: '一摞信封，都是药行往来的公函。' },
       { n: '床', at: [10, 14.5, 72], t: '被子叠着，没睡过。' },
     ],
     '东头空客房': [
-      { n: '藤椅', at: [104.5, 14.4, 65], r2: ['R2-06'], t: '一把旧藤椅，坐垫有点塌。' },
+      { n: '藤椅', at: [111, 14.4, 69], r2: ['R2-06'], t: '一把旧藤椅，坐垫有点塌。' },
       { n: '南窗窗台', at: [128, 15.4, 89.4], r2: ['R2-06'], t: '窗台很高，积着厚灰。' },
       { n: '箱笼', at: [132.5, 15, 65.5], t: '樟木箱子，锁着，锁头上的灰没动过。' },
       { n: '蒙布的家具', at: [138, 15, 83], t: '白布底下是一张旧八仙桌，几把椅子倒扣着。' },
@@ -2133,7 +2133,7 @@ const V3 = {};
       if (m === 'low') PRMIN = PRMAX = Math.min(DPR, 1); else if (m === 'mid') PRMIN = PRMAX = Math.min(DPR, 1.5); else if (m === 'high') PRMIN = PRMAX = hi;
       else { PRMAX = LOOK.mobile ? Math.min(DPR, 1.75) : hi; PRMIN = Math.min(DPR, 1); }
       PRNOW = PRMAX; renderer.setPixelRatio(PRNOW); if (W > 1) renderer.setSize(W, H, false);
-      const b = el.querySelector('.walk-q'); if (b) b.textContent = '画质 · ' + QN[m]; need = true; }
+      const b = el.querySelector('[data-w=q]'); if (b) b.textContent = '画质 · ' + QN[m]; need = true; }
     if (LOOK.mobile) renderer.shadowMap.type = THREE.PCFShadowMap;   // 场景是静的：阴影只在场景变了以后重算一次
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     cbox.appendChild(renderer.domElement);
@@ -2233,6 +2233,7 @@ const V3 = {};
       const px = x / K, pz = z / K, R = HOT[floor] || [];
       for (let i = 0; i < R.length; i++) { const b = R[i].box; if (b && px >= b[0] - 0.5 && px <= b[2] + 0.5 && pz >= b[1] - 0.5 && pz <= b[3] + 0.5) return false; }
       if (floor === 2 && px >= 106 && px <= 124 && pz >= 30 && pz <= 52.5) return false;   // 二楼楼梯口平台
+      if (floor === 2 && px >= 124 && px <= 150 && pz >= 30 && pz <= 52.5) return false;   // 二楼杂物间
       return true;   // 走出了所有房间、院子的范围
     }
     function roomAt(x, z) { const px = x / K, pz = z / K, R = HOT[floor] || []; for (let i = 0; i < R.length; i++) { const b = R[i].box; if (b && px >= b[0] && px < b[2] && pz >= b[1] && pz < b[3]) return R[i].loc; } return null; }

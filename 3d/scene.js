@@ -156,7 +156,7 @@ const SCENE = {};
     // 卧房
     M.bed(g, 10, 71.5, 14, 17, 0, true);
     M.table(g, 20.2, 64.8, 4.4, 4, 2.6, 0, '#3f2516');
-    M.wardrobe(g, 39.5, 63.8, 13, 3.6, 6.5, 0);
+    M.wardrobe(g, 29, 63.8, 13, 3.6, 6.5, 0);   // 让开房门
     M.table(g, 40, 81.5, 14, 5, 2.7, 0, '#4a2e1c'); M.chair(g, 40, 78, Math.PI);
     M.screen(g, 19, 73, 3, 3, Math.PI / 2);
     // 书房
@@ -176,7 +176,7 @@ const SCENE = {};
     [[122.5, 66.8, 9, 5.6, 3.2], [132.5, 65.5, 7, 5, 2.6], [122, 73.5, 8, 5, 2.8], [142.5, 68, 9, 6, 3.4], [143.5, 75.3, 7, 4.6, 2.4]].forEach(([x, z, w, d, h]) => M.trunkBox(g, x, z, w, d, h));
     M.trunkBox(g, 122.5, 66.8, 7, 4.6, 2.2, 0.2, 3.2);
     M.covered(g, 138, 83, 16, 8, 3); M.covered(g, 117, 84.5, 7, 5, 4.5);
-    M.rattan(g, 104.5, 65, Math.PI * 0.8);
+    M.rattan(g, 111, 69, Math.PI * 0.8);   // 别挡门
   }
 
   SCENE.buildGround = (s) => { yards(s); firstFloor(s); };
