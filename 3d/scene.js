@@ -138,7 +138,7 @@ const SCENE = {};
     M.wall(g, 50, 60, 50, 90, H1, 1, W2); M.wall(g, 100, 60, 100, 90, H1, 1, W2);
     // 落地窗（虚掩）
     const fw = M.group(g, 87, 0, 90, 0); M.box(fw, 5.5, 8, 0.25, 2.75, 0, 0, M.mat('#a9c3c6', { transparent: true, opacity: 0.4 })); M.box(fw, 5.5, 0.3, 0.3, 2.75, 7.8, 0, '#3f2516');
-    const fw2 = M.group(g, 98, 0, 90, 0.5); M.box(fw2, 5.5, 8, 0.25, -2.75, 0, 0, M.mat('#a9c3c6', { transparent: true, opacity: 0.4 })); M.box(fw2, 0.3, 8, 0.3, -5.4, 0, 0, '#3f2516'); M.box(fw2, 0.3, 8, 0.3, -0.1, 0, 0, '#3f2516');
+    const fw2 = M.group(g, 98, 0, 90, 0.5); M.box(fw2, 5.5, 8, 0.25, -2.75, 0, 0, M.mat('#a9c3c6', { transparent: true, opacity: 0.4 })); M.box(fw2, 0.3, 8, 0.3, -5.4, 0, 0, '#3f2516'); M.box(fw2, 0.3, 8, 0.3, -0.1, 0, 0, '#3f2516'); fw.userData.struct = 1; fw2.userData.struct = 1;   // 跟墙一起收紧，留在窗洞里
     // 门扇
     M.door(g, 42, 60, 5.2, 0.7); M.door(g, 56, 60, 5.8, -1.2); M.door(g, 101, 60, 5.2, -0.7);
     M.door(g, 47, 52, 5, Math.PI + 0.8); M.door(g, 100, 52, 5, Math.PI + 0.8); M.door(g, 126, 52, 5, -0.8);
