@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=33' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=34' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -343,7 +343,7 @@ const V3 = {};
     IM.brass = new THREE.MeshStandardMaterial({ color: 0xc39445, metalness: 0.9, roughness: 0.3 });
     IM.glass = new THREE.MeshStandardMaterial({ color: 0x9fb2bc, transparent: true, opacity: 0.18, roughness: 0.05, metalness: 0.2 });
     IM.curtainR = new THREE.MeshStandardMaterial({ color: 0x5a1712, roughness: 0.9, side: THREE.DoubleSide });
-    IM.curtainG = new THREE.MeshStandardMaterial({ color: 0x23342c, roughness: 0.9, side: THREE.DoubleSide });
+    IM.curtainG = new THREE.MeshStandardMaterial({ color: 0x6a7262, roughness: 0.9, side: THREE.DoubleSide });
     IM.sheer = new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.9, transparent: true, opacity: 0.4, side: THREE.DoubleSide });
     // 墙：护墙板 + 墙纸 / 满墙木板（一块 6 尺宽、10.5 尺高）
     const PX = 100, WW = 6 * PX, WH = Math.round(IH * PX), Y = v => WH - v * PX;
@@ -514,7 +514,7 @@ const V3 = {};
           M.box(p, horiz ? len + 0.4 : t + 0.5, 0.25, horiz ? t + 0.5 : len + 0.4, cx, o.sill - 0.05, cz, IM.wood('#3f2516'));
           for (let k = 0; k <= 3; k++) { const q = o.s + len * k / 3, [mx, mz] = at(q); M.box(p, horiz ? 0.2 : 0.22, top - o.sill, horiz ? 0.22 : 0.2, mx, o.sill, mz, IM.wood('#3f2516')); }
           [o.sill + (top - o.sill) * 0.62, top - 0.15].forEach(y => M.box(p, horiz ? len : 0.22, 0.18, horiz ? 0.22 : len, cx, y, cz, IM.wood('#3f2516')));
-          if (ext && !(p.isScene === false && false)) {
+          if (ext && !(gy < 6 && (horiz ? z0 === 30 : x0 === 150))) {   // 后廊、厨房这种干活的地方不挂窗帘
             const off = inSign * (t / 2 + 0.45), red = gy > 6;
             const cm = red ? IM.curtainR : IM.curtainG;
             [o.s - 0.5, o.e + 0.5].forEach((q, k) => { const [dx, dz] = at(q); drape(p, horiz ? dx : dx + off, horiz ? dz + off : dz, horiz, k, 8.6, 2.0, cm, 0.4); });
@@ -750,6 +750,7 @@ const V3 = {};
       return g;
     };
     keep.floor = M.floor; keep.bookcase = M.bookcase; keep.slumped = M.slumped;
+    M.rattan = (p, x, z, ry = 0) => { const g = M.group(p, x, 0, z, ry); model(g, 'Rockingchair_01', 0, 0, 0, Math.PI, 3.0); return g; };   // 原来的“藤椅”是圆桶加半个圈，换成实物扫描的摇椅
     keep.carpet = M.carpet;
     M.carpet = (p, x0, z0, x1, z1, field, border, y = 0.05) => {
       const w = x1 - x0, d = z1 - z0, geo = new THREE.PlaneGeometry(w, d);
@@ -897,7 +898,7 @@ const V3 = {};
     [[22, 96], [92, 96], [118, 96]].forEach(([x, z], i) => model(s, i % 2 ? 'potted_plant_02' : 'potted_plant_04', x, 0, z, i, 3.4));
   }
   /* 天花：各屋不同——藻井、石膏线灯盘、木梁、木板、水渍 */
-  const HOLE = [109, 48, 117, 56.4];
+  const HOLE = [109, 48, 117, 52];   // 楼梯陡一点，只占到走廊边上
   function cutHole(r) {   // 矩形减去楼梯井洞口，返回剩下的几块（保留后面的附加字段）
     const [x0, z0, x1, z1] = r, [a, b, c, d] = HOLE, rest = r.slice(4);
     if (x1 <= a || x0 >= c || z1 <= b || z0 >= d) return [r];
@@ -1053,20 +1054,17 @@ const V3 = {};
       M.trunkBox(s, 6, 52, 4, 2.6, 2.2, 0.1); M.trunkBox(s, 6, 52, 3.4, 2.2, 1.6, -0.1, 2.2);
       model(s, 'wooden_crate_01', 26, 0, 86.6, 0.5, 3); model(s, 'ceramic_vase_04', 2.2, 0, 64, 0, 2.6);
       // ================= 后廊 =================
-      bench(48, 31.0, 0, 6); bench(102, 31.0, 0, 5);
+      bench(48, 31.0, 0, 6);
       [[16, 37.4], [62, 37.4], [97, 37.4]].forEach(([x, z]) => { oilLamp(x, 6.4, z - 0.3, true); box(x, 6.2, z - 0.25, 0.9, 0.2, 0.6, WD('#4a2a14')); });
       { const g = G(78.5, 0, 31.2); mk(g, new THREE.BoxGeometry(3.6, 0.12, 1.2), WD('#5a3820'), 0, 0.9, 0); mk(g, new THREE.BoxGeometry(3.6, 0.12, 1.2), WD('#5a3820'), 0, 0.1, 0); [-1.7, 1.7].forEach(x => mk(g, new THREE.BoxGeometry(0.12, 1.0, 1.2), WD('#5a3820'), x, 0.5, 0));
         [[-1.1, '#1a1612'], [-0.4, '#3a2a1a'], [0.5, '#1a1612'], [1.2, '#5a3a2a']].forEach(([x, c], i) => { [-0.18, 0.18].forEach(d => { const o = mk(g, new THREE.SphereGeometry(0.18, 8, 6), cloth(c), x + d, i < 2 ? 1.05 : 0.25, 0); o.scale.set(0.8, 0.5, 2); }); }); }
       { const g = G(84, 0, 31.8); mk(g, lathe([[0, 0], [0.5, 0], [0.55, 1.8], [0.5, 1.8], [0.45, 0.1], [0, 0.1]], pottery('#3a4a4a')), 0, 0, 0); [[0.15, '#8a2a2a'], [-0.15, '#1a1a1a']].forEach(([a, c]) => { const u = mk(g, new THREE.CylinderGeometry(0.1, 0.05, 3.0, 8), cloth(c), a, 1.6, 0); u.rotation.z = a; }); }
-      broom(31, 32, 0.4); broom(122.6, 32, -0.3); basket(40, 0, 31.4, 0.9); basket(41.6, 0, 31.6, 0.7, '#8a6a3a');
-      [[6, 31.2], [128, 37]].forEach(([x, z]) => model(s, 'planter_pot_clay', x, 0, z, x, 3));
-      { const g = G(140, 0, 31.0); [0, 1].forEach(r => [0, 1, 2].forEach(c => mk(g, new THREE.CylinderGeometry(0.42, 0.42, 0.55, 14), new THREE.MeshStandardMaterial({ color: 0x1a1816, roughness: 0.9 }), c * 0.9 - 0.9, 0.28 + r * 0.56, r * 0.2))); }
-      box(144, 0, 37.0, 3.4, 2.2, 1.0, WD('#6a4a2a')); mug(143.2, 2.2, 37); model(s, 'jug_01', 144.6, 2.2, 37, 0, 2.6);
+      model(s, 'planter_pot_clay', 6, 0, 31.2, 6, 3);   // 后廊只留长凳、鞋架、伞桶和一盆花
       // ================= 楼梯：扶手栏杆、梯毯 =================
-      for (let i = 0; i < 14; i++) { const z = 39.6 + i * 1.2 + 0.6, h = F2 / 14 * (i + 1);
-        box(113, h, z, 6, 0.03, 1.1, cloth('#6b2a24')).userData.struct = 1;
+      for (let i = 0; i < 14; i++) { const z = 39.6 + i * 0.8857 + 0.8857 / 2, h = F2 / 14 * (i + 1);
+        box(113, h, z, 6, 0.03, 0.8857 - 0.1, cloth('#6b2a24')).userData.struct = 1;
         const o = mk(s, lathe([[0.1, 0], [0.16, 0.2], [0.08, 0.6], [0.14, 1.4], [0.08, 2.3], [0.1, 2.8]], WD('#3a1a0c'), 8), 116.8, h, z); o.userData.fixed = o.userData.nocol = 1; }
-      { const L = Math.hypot(16.8, F2), r = mk(s, new THREE.BoxGeometry(0.3, 0.22, L), WD('#2a1208'), 116.8, (F2 / 14 + F2) / 2 + 2.85, 48.3); r.rotation.x = -Math.atan2(F2, 16.8); r.userData.fixed = r.userData.nocol = 1; }
+      { const L = Math.hypot(12.4, F2), r = mk(s, new THREE.BoxGeometry(0.3, 0.22, L), WD('#2a1208'), 116.8, (F2 / 14 + F2) / 2 + 2.85, 45.8); r.rotation.x = -Math.atan2(F2, 12.4); r.userData.fixed = r.userData.nocol = 1; }
       { const g = G(116.8, 0, 39.9); g.userData.fixed = g.userData.nocol = 1; mk(g, new THREE.BoxGeometry(0.6, 3.6, 0.6), WD('#2a1208'), 0, 1.8, 0); mk(g, new THREE.SphereGeometry(0.4, 14, 10), IM.brass, 0, 3.9, 0); }
       frame(106.5, 7.0, 54, Math.PI / 2, 2.2, 1.6, 'land'); frame(123.5, 9.5, 46, -Math.PI / 2, 1.4, 1.8, 'photo');
       // ================= 下人房 =================
@@ -1141,7 +1139,7 @@ const V3 = {};
     } else {
       const y = F2;
       // ================= 二楼走廊 =================
-      [[20, 52.6, 0, 'land'], [44, 52.6, 0, 'photo'], [96, 52.6, 0, 'land'], [132, 52.6, 0, 'photo'], [40, 59.4, Math.PI, 'photo'], [100, 59.4, Math.PI, 'land']].forEach(([x, z, r, k]) => frame(x, y + 6.4, z, r, k === 'land' ? 2.4 : 1.2, k === 'land' ? 1.6 : 1.5, k));
+      [[20, 52.6, 0, 'land'], [62, 52.6, 0, 'photo'], [88, 52.6, 0, 'land'], [141, 52.6, 0, 'photo'], [30, 59.4, Math.PI, 'photo'], [85, 59.4, Math.PI, 'land']]   /* 画框只挂在没门的墙段上 */.forEach(([x, z, r, k]) => frame(x, y + 6.4, z, r, k === 'land' ? 2.4 : 1.2, k === 'land' ? 1.6 : 1.5, k));
       [[30, 52.6, 0], [80, 52.6, 0], [120, 59.4, Math.PI], [70, 59.4, Math.PI]].forEach(([x, z, r]) => sconce(x, y + 6.6, z, r));
       bench(88, 53.4, 0, 5, y); model(s, 'potted_plant_04', 104, y, 58.6, 0.3, 2.8); model(s, 'antique_ceramic_vase_01', 52, y, 53.2, 0, 3);
       // ================= 沈伯衡卧房 =================
@@ -1417,7 +1415,7 @@ const V3 = {};
     model(s, 'tea_set_01', 94.0, y + 2.2, 71.0, 0.4, 2.6);
 
     // —— 地上：废纸篓旁的画缸、痰盂、炭盆 ——
-    { const g = G(85.2, y, 81.2); mk(g, lathe([[0, 0], [0.75, 0], [0.85, 1.5], [0.8, 1.6], [0.7, 1.6], [0.7, 0.1], [0, 0.1]], new THREE.MeshStandardMaterial({ color: 0xdfe4e6, roughness: 0.25 })), 0, 0, 0);
+    { const g = G(66, y, 86.5); mk(g, lathe([[0, 0], [0.75, 0], [0.85, 1.5], [0.8, 1.6], [0.7, 1.6], [0.7, 0.1], [0, 0.1]], new THREE.MeshStandardMaterial({ color: 0xdfe4e6, roughness: 0.25 })), 0, 0, 0);
       [[0.25, 0.1, 0.15], [-0.2, 0.2, -0.1], [0.05, -0.25, 0.08], [-0.25, -0.1, -0.2], [0.3, -0.2, 0.25]].forEach(([a, b, t]) => { const r = mk(g, new THREE.CylinderGeometry(0.12, 0.12, 2.4, 10), paper, a, 1.6, b); r.rotation.set(t, 0, a * 0.6); }); }
     model(s, 'pot_enamel_01', 70.2, y, 81.3, 0.3, 2.4);
     { const g = G(87.5, y, 72.5); mk(g, lathe([[0, 0.9], [0.9, 0.9], [1.0, 1.4], [0.85, 1.5], [0, 1.2]], IM.brass), 0, 0, 0);
@@ -1889,6 +1887,10 @@ const V3 = {};
     // 天花：一楼在楼梯井处留洞，二楼整块
     cutHole([-0.5, 29.5, 150.5, 90.5]).forEach(([x0, z0, x1, z1]) => { const ce = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 0.4, z1 - z0), IM.ceil); ce.position.set((x0 + x1) / 2, IH + 0.2, (z0 + z1) / 2); ce.castShadow = ce.receiveShadow = true; s.add(ce); });
     { const ce = new THREE.Mesh(new THREE.BoxGeometry(151, 0.4, 61), IM.ceil); ce.position.set(75, F2 + IH + 0.2, 60); ce.castShadow = ce.receiveShadow = true; s.add(ce); }
+    { const tile = new THREE.MeshStandardMaterial({ color: 0x34312e, roughness: 0.85 }), wd = IM.wood('#4a2e1c');   // 前檐：从二楼外墙挑出去，盖住大半个露台
+      const ev = new THREE.Mesh(new THREE.BoxGeometry(154, 0.5, 11.5), tile); ev.position.set(75, F2 + IH + 0.1, 95.6); ev.rotation.x = 0.06; ev.castShadow = ev.receiveShadow = true; s.add(ev);
+      const fa = new THREE.Mesh(new THREE.BoxGeometry(154, 0.9, 0.3), wd); fa.position.set(75, F2 + IH - 0.6, 101.3); s.add(fa);
+      const so = new THREE.Mesh(new THREE.BoxGeometry(154, 0.12, 11.2), IM.ceil); so.position.set(75, F2 + IH - 0.25, 95.6); so.rotation.x = 0.06; s.add(so); }
     { const c2 = new THREE.Mesh(new THREE.BoxGeometry(27, 0.4, 25), IM.ceil); c2.position.set(-23, IH + 0.2, 20); c2.castShadow = true; s.add(c2); }
     M.box(s, 152, 0.3, 4, 75, F2 + IH + 0.2, 92, '#2a2420');
     { const oc = M.carpet; if (CARPET) M.carpet = CARPET; try { decorate(s, 1); roomsDeco(s, 1); decorate(s, 2); roomsDeco(s, 2); } finally { M.carpet = oc; } }
@@ -1905,7 +1907,7 @@ const V3 = {};
     avatar(s, -9.5, 0, 20.5, Math.PI, { mh: 'm_mid', pose: 'rest', top: '#4a4236', vest: '#1e1c1a', hat: 'gua', glasses: true });
     avatar(s, 70.5, 0, 101.5, Math.PI * 0.75, { mh: 'm_young', pose: 'rest', top: '#2e3e58', bottom: '#22262c', hat: 'straw' });
     avatar(s, 40, 0, 104.5, Math.PI / 2, { mh: 'm_old', pose: 'lantern', top: '#5a5a56', vest: '#151413', gown: 1, hat: 'gua', mustache: 1 });
-    avatar(s, 140.7, 0, 47.4, Math.PI / 2, { mh: 'f_mid', pose: 'stir', top: '#3a4a5a', bottom: '#2a2a2e', apron: '#d8d0c0', bun: 1, h: 2.45 });
+    avatar(s, 139, 0, 50.5, 1.1, { mh: 'f_mid', pose: 'stir', top: '#3a4a5a', bottom: '#2a2a2e', apron: '#d8d0c0', bun: 1, h: 2.45 });
     { const lt = new THREE.PointLight(0xffa850, 60, 26, 1.6); lt.position.set(40, 6, 104); s.add(lt); const lt2 = new THREE.PointLight(0xffa850, 40, 22, 1.6); lt2.position.set(17, 7, 21); s.add(lt2); }
     compress(s);
     clearDoors(s, 1); clearDoors(s, 2);
@@ -2056,7 +2058,7 @@ const V3 = {};
       { n: '南窗', at: [69, 17, 89.4], r1: ['R1-04'], t: '插销插得好好的，窗台的灰没有动过。' },
       { n: '落地窗', at: [92.5, 17, 89.4], r1: ['R1-04'], t: '窗扇虚掩着，插销是坏的。' },
       { n: '多宝格', at: [53.4, 17, 75.5], r1: ['R1-06'], t: '一排药罐，中间空着一格，灰印很新。' },
-      { n: '纸篓', at: [91, 14.6, 83.2], r1: ['R1-08'], t: '纸灰已经被人翻过了。' },
+      { n: '纸篓', at: [83.4, 14.6, 78.6], r1: ['R1-08'], t: '纸灰已经被人翻过了。' },
       { n: '铁盒', at: [79.3, 20, 62.6], r1: ['R1-09'], t: '紫檀铁盒还搁在书架顶上，铜锁扣着。' },
       { n: '书架', at: [70, 16.5, 62.8], t: '医书、药典、几大本旧账，排得满满的，看不出动过。' },
       { n: '扶手椅', at: [96.2, 14.6, 68], t: '椅背上搭着一条薄毯，叠得整整齐齐。' },
@@ -2198,7 +2200,7 @@ const V3 = {};
       const y0 = f === 2 ? F2 : 0, out = [], bb = new THREE.Box3(), sz = new THREE.Vector3();
       s.updateMatrixWorld(true);
       const add = (b, src) => { if (b.isEmpty() || b.max.y < y0 + 0.5 || b.min.y > y0 + 4.6) return; if (f === 2 && b.min.y < y0 - 1 && b.max.y < y0 + 2.5) return; /* 一楼的东西（如门廊顶）只冒出二楼地面一点，不算二楼障碍 */ const r = [b.min.x, b.min.z, b.max.x, b.max.z]; r.src = src; r.h = [b.min.y, b.max.y];
-        r.step = !!(src && src.isMesh && !src.userData.wall && src.geometry && src.geometry.type === 'BoxGeometry' && b.min.y < y0 + 0.3 && Math.min(b.max.x - b.min.x, b.max.z - b.min.z) >= 0.8); r.wall = !!(src && src.userData.wall);
+        r.step = !!(src && src.isMesh && !src.userData.wall && src.geometry && src.geometry.type === 'BoxGeometry' && b.min.y < y0 + 0.3 && Math.min(b.max.x - b.min.x, b.max.z - b.min.z) >= 0.55); r.wall = !!(src && src.userData.wall);
         if (!r.wall && !r.step) { const ix = Math.min(0.15, (r[2] - r[0]) * 0.15), iz = Math.min(0.15, (r[3] - r[1]) * 0.15); r[0] += ix; r[2] -= ix; r[1] += iz; r[3] -= iz; }   // 家具外框比看上去大，往里收一点
         out.push(r); };   // 台阶、矮台：能踩上去   // 薄板（护墙、栏杆）不能踩
       if (glbOnly) { s.traverse(o => { if (!o.userData.glb || o.userData.nocol) return; for (let q = o.parent; q; q = q.parent) if (q.userData && (q.userData.avatar || q.userData.nocol)) return;
@@ -2221,6 +2223,7 @@ const V3 = {};
     let ground = 0;     // 脚下的高度：踩上台阶、楼梯会变高
     const STEPUP = 1.5;
     function groundAt(x, z, any) {
+      if (floor === 2) { const px = x / K, pz = z / K; if (px > HOLE[0] && px < HOLE[2] && pz > 39.6 && pz < HOLE[3]) return F2 / 14 * Math.min(14, Math.floor((pz - 39.6) / 0.8857) + 1); }   // 二楼站在楼梯口里：脚下就是那一级台阶
       const y0 = floor === 2 ? F2 : 0, L = COL[floor]; let g = y0;
       if (L) for (let i = 0; i < L.length; i++) { const b = L[i]; if (b.step && x >= b[0] && x <= b[2] && z >= b[1] && z <= b[3] && b.h[1] > g && (any ? b.h[1] < y0 + F2 + 0.5 : b.h[1] <= ground + STEPUP)) g = b.h[1]; }
       return g;
@@ -2286,7 +2289,7 @@ const V3 = {};
       { const b0 = Math.floor(bob / Math.PI); bob += md * 1.1; if (Math.floor(bob / Math.PI) !== b0) SND.myStep(ground > 0.4 && ground < F2 - 0.4); }   // 每迈一步响一声，楼梯上带吱呀
       lift += (ground - lift) * Math.min(1, dt * 12); pos.y = lift + EYE + Math.sin(bob) * 0.06;
       if (floor === 1 && ground >= F2 - 0.3) switchFloor(2);                                                   // 楼梯走到顶：上了二楼
-      else if (floor === 2) { const px = pos.x / K, pz = pos.z / K; if (px > HOLE[0] + 0.2 && px < HOLE[2] - 0.2 && pz > HOLE[1] + 0.2 && pz < HOLE[3] - 0.1) switchFloor(1); }   // 二楼走进楼梯口：往下走
+      else if (floor === 2 && ground < F2 - 1.2) switchFloor(1);   // 往下走了两级才算回到一楼，楼梯顶不再来回跳层
       updRoom(); return true;
     }
     function sendPos(now) {
@@ -2366,7 +2369,7 @@ const V3 = {};
       for (let i = 0; i < N; i++) { const x = (Math.random() * 2 - 1) * R, y = Math.random() * H, z = (Math.random() * 2 - 1) * R;
         pos3.set([x, y, z, x, y, z], i * 6); seed[i * 2] = 0; seed[i * 2 + 1] = 1; }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos3, 3)); g.setAttribute('tip', new THREE.BufferAttribute(seed, 1));
-      const box = new THREE.Vector4(-0.5 * K, 29.5 * K, 150.5 * K, 90 * K);
+      const box = new THREE.Vector4(-0.5 * K, 29.5 * K, 150.5 * K, 101.5 * K);   // 屋里和前檐、露台底下不下雨
       const mat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { t: { value: 0 }, c: { value: new THREE.Vector3() }, box: { value: box }, R: { value: R }, H: { value: H } },
         vertexShader: `attribute float tip; uniform float t, R, H; uniform vec3 c; varying vec2 wxz; varying float a;
           void main() { vec3 p = position; float y = mod(p.y - t * 38.0, H); vec3 w = vec3(c.x + mod(p.x - c.x + R, 2.0 * R) - R, c.y - 14.0 + y, c.z + mod(p.z - c.z + R, 2.0 * R) - R);
