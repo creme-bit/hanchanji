@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=24' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=25' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -436,7 +436,7 @@ const V3 = {};
       ok(g.scene); }, undefined, no)));
   }
   function model(p, id, x, y, z, ry = 0, sc = 3, opt = {}) {
-    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; g.scale.setScalar(sc); p.add(g);
+    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; g.scale.setScalar(sc); g.userData.glb = 1; p.add(g);
     gload(id).then(src => { const c = src.clone(true); if (opt.center) { const b = new THREE.Box3().setFromObject(c); c.position.x -= (b.min.x + b.max.x) / 2; c.position.z -= (b.min.z + b.max.z) / 2; } g.add(c); g.updateMatrixWorld(true); V3.onModel && V3.onModel(); }).catch(() => {});
     return g;
   }
@@ -1670,7 +1670,7 @@ const V3 = {};
     m.userData.look = 'cloth'; return m;
   }
   function avatar(s, x, y, z, faceY, o = {}) {
-    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = faceY; s.add(g);
+    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = faceY; g.userData.nomerge = 1; s.add(g);
     if (!gltfLoader) gltfLoader = new THREE.GLTFLoader();
     const female = !!o.bun;
     Promise.all([new Promise((res, rej) => gltfLoader.load('3d/models/' + (female ? 'qm_female' : 'qm_male') + '.glb', res, undefined, rej)), qAnims()]).then(([gl, clips]) => {
@@ -1695,7 +1695,7 @@ const V3 = {};
         const ni = []; for (let t = 0; t < idx.length; t += 3) { const c = parts.includes(VP[idx[t]]) + parts.includes(VP[idx[t + 1]]) + parts.includes(VP[idx[t + 2]]); if (c >= need) ni.push(idx[t], idx[t + 1], idx[t + 2]); }
         g2.setIndex(ni); g2.clearGroups(); const sm = new THREE.SkinnedMesh(g2, mat); sm.bind(body.skeleton, body.bindMatrix); sm.castShadow = !o.dyn; sm.frustumCulled = false; body.parent.add(sm); return sm; };
       const top = o.top || '#3a3a40', bottom = o.bottom || top, gown = !!o.gown;
-      shell(gown || female ? ['torso', 'arm', 'neck'] : ['torso', 'arm'], 0.011, fabric(top), gown || female ? 2 : 1);
+      shell(gown || female ? ['torso', 'arm', 'neck'] : ['torso', 'arm'], gown ? 0.022 : 0.017, fabric(top), gown || female ? 2 : 1);   // 衣服放宽一点，不贴出肌肉
       shell(['leg'], 0.009, fabric(female && !o.bottom ? '#2a2522' : bottom));
       shell(['foot'], 0.012, new THREE.MeshStandardMaterial({ color: female ? 0x2a1a14 : 0x141110, roughness: 0.45 }), 1);
       if (o.vest) shell(['torso'], 0.022, fabric(o.vest, 0.8));
@@ -1713,10 +1713,12 @@ const V3 = {};
           const kn = new THREE.Mesh(new THREE.SphereGeometry(0.017, 8, 6), new THREE.MeshStandardMaterial({ color: 0xa01810 })); kn.position.set(V.x, topY + 0.03, V.z); m.add(kn); head.attach(kn); }
         if (o.glasses) { let eb = new THREE.Box3(); m.traverse(q => { if (q.isMesh && /Eye/.test((q.material && q.material.name) || '')) eb.expandByObject(q); });
           if (!eb.isEmpty()) { eb.getCenter(V2); const gm2 = new THREE.MeshStandardMaterial({ color: 0x8a7a50, metalness: 0.8, roughness: 0.3 }); const side = new THREE.Vector3(fz, 0, -fx);
-            [-1, 1].forEach(e => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.019, 0.0025, 6, 18), gm2); r.position.set(V2.x + side.x * e * 0.032 + fx * 0.012, V2.y, V2.z + side.z * e * 0.032 + fz * 0.012); r.lookAt(r.position.x + fx, r.position.y, r.position.z + fz); m.add(r); head.attach(r); }); } }
+            [-1, 1].forEach(e => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.021, 0.003, 6, 18), gm2); r.position.set(V2.x + side.x * e * 0.033 + fx * 0.045, V2.y + 0.004, V2.z + side.z * e * 0.033 + fz * 0.045); r.lookAt(r.position.x + fx, r.position.y, r.position.z + fz); m.add(r); head.attach(r); }); } }
         // 统一朝向 +x、按身高缩放、脚踩地
         const wrap = new THREE.Group(); wrap.add(m); wrap.rotation.y = Math.atan2(fz, fx);
-        const bb = new THREE.Box3().setFromObject(body); const S = (o.h ? o.h * 1.78 : (female ? 4.35 : 4.65)) / (bb.max.y - bb.min.y); wrap.scale.setScalar(S); wrap.position.y = -bb.min.y * S;
+        const bb = new THREE.Box3().setFromObject(body); const S = (o.h ? o.h * 1.78 : (female ? 4.35 : 4.65)) / (bb.max.y - bb.min.y);
+        const side = Math.abs(fz) >= Math.abs(fx);   // 免费版身材是“超级英雄”比例：肩宽、胸厚收一收
+        wrap.scale.set(S * (side ? 0.86 : 0.93), S, S * (side ? 0.93 : 0.86)); wrap.position.y = -bb.min.y * S;
         g.add(wrap);
         // 灯笼：挂在右手
         if (o.pose === 'lantern' && bones['hand_r']) { const lt = new THREE.Group(); const hp = new THREE.Vector3(); wrap.updateMatrixWorld(true); bones['hand_r'].getWorldPosition(hp); g.worldToLocal(hp);
@@ -1849,6 +1851,7 @@ const V3 = {};
     clearDoors(s, 1); clearDoors(s, 2);
     LOOK.upgrade(s);
     s.traverse(o => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.envMapIntensity !== undefined && m !== IM.brass) m.envMapIntensity = 0.7; }); });
+    if (LOOK.mobile) { const rm = []; s.traverse(o => { if (o.isPointLight && o.intensity < 12) rm.push(o); if (o.isSpotLight) o.castShadow = false; }); rm.forEach(o => o.parent.remove(o)); }   // 手机：小装饰灯去掉，聚光不投影，只留月光的阴影
     // 按层分组室内灯（院子、街上的灯常亮）；两组凑成一样多，换层时着色器不用重编
     const FL = { 1: [], 2: [] }, wp = new THREE.Vector3(); s.updateMatrixWorld(true);
     s.traverse(o => { if (!(o.isPointLight || o.isSpotLight)) return; o.getWorldPosition(wp); const px = wp.x / K, pz = wp.z / K;
@@ -1856,7 +1859,45 @@ const V3 = {};
     const cnt = (L, t) => L.filter(o => o[t]).length;
     [1, 2].forEach(f => { const o2 = f === 1 ? 2 : 1; for (let i = cnt(FL[f], 'isPointLight'); i < cnt(FL[o2], 'isPointLight'); i++) { const d = new THREE.PointLight(0, 0, 1); d.userData.noscale = 1; s.add(d); FL[f].push(d); } });
     s.userData.FL = FL;
+    if (V3._colRaw) s.userData.colStatic = { 1: V3._colRaw(s, 1), 2: V3._colRaw(s, 2) };   // 合批前把碰撞算好
+    mergeStatic(s);
     return s;
+  }
+  /* 合批：把静止的零件按材质、按区域（18×18 一格、分上下层）合成一个网格，几千次绘制降到几百次 */
+  function mergeStatic(s) {
+    s.updateMatrixWorld(true);
+    const groups = new Map(), c = new THREE.Vector3(), ws = new THREE.Vector3();
+    const skip = o => { for (let q = o; q; q = q.parent) if (q.userData && (q.userData.glb || q.userData.avatar || q.userData.nomerge)) return true; return false; };
+    s.traverse(o => {
+      if (!o.isMesh || o.isSkinnedMesh || o.isInstancedMesh || Array.isArray(o.material) || !o.visible || !o.material) return;
+      const g = o.geometry; if (!g || !g.attributes.position || g.morphAttributes.position) return;
+      const keys = Object.keys(g.attributes).sort().join(','); if (keys !== 'normal,position,uv' && keys !== 'normal,position') return;
+      if (!g.boundingSphere) g.computeBoundingSphere(); o.getWorldScale(ws); if (g.boundingSphere.radius * Math.max(ws.x, ws.y, ws.z) > 30) return;
+      if (skip(o)) return;
+      o.getWorldPosition(c); const cell = Math.floor(c.x / 18) + ',' + Math.floor(c.z / 18) + ',' + (c.y > F2 - 0.5 ? 1 : 0);
+      const key = o.material.uuid + '|' + keys + '|' + cell + '|' + (o.castShadow ? 1 : 0) + (o.receiveShadow ? 1 : 0) + '|' + o.renderOrder;
+      let L = groups.get(key); if (!L) groups.set(key, L = []); L.push(o);
+    });
+    const v = new THREE.Vector3(), nm = new THREE.Matrix3(); let merged = 0, removed = 0;
+    groups.forEach(list => {
+      if (list.length < 2) return;
+      let nv = 0, ni = 0; list.forEach(o => { const g = o.geometry; nv += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; });
+      const hasUV = !!list[0].geometry.attributes.uv, P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), U = hasUV ? new Float32Array(nv * 2) : null, I = new (nv > 65535 ? Uint32Array : Uint16Array)(ni);
+      let vo = 0, io = 0;
+      list.forEach(o => { const g = o.geometry, p = g.attributes.position, n = g.attributes.normal, uv = g.attributes.uv, mw = o.matrixWorld; nm.getNormalMatrix(mw); const flip = mw.determinant() < 0;
+        for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).applyMatrix4(mw); P[(vo + i) * 3] = v.x; P[(vo + i) * 3 + 1] = v.y; P[(vo + i) * 3 + 2] = v.z;
+          v.fromBufferAttribute(n, i).applyMatrix3(nm).normalize(); N[(vo + i) * 3] = v.x; N[(vo + i) * 3 + 1] = v.y; N[(vo + i) * 3 + 2] = v.z;
+          if (U) { U[(vo + i) * 2] = uv.getX(i); U[(vo + i) * 2 + 1] = uv.getY(i); } }
+        const cnt = g.index ? g.index.count : p.count, get = g.index ? (i => g.index.getX(i)) : (i => i);
+        for (let i = 0; i < cnt; i += 3) { const a = get(i), b = get(i + 1), d = get(i + 2); I[io++] = vo + a; if (flip) { I[io++] = vo + d; I[io++] = vo + b; } else { I[io++] = vo + b; I[io++] = vo + d; } }
+        vo += p.count; });
+      const mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(P, 3)); mg.setAttribute('normal', new THREE.BufferAttribute(N, 3)); if (U) mg.setAttribute('uv', new THREE.BufferAttribute(U, 2)); mg.setIndex(new THREE.BufferAttribute(I, 1)); mg.computeBoundingSphere(); mg.computeBoundingBox();
+      const m = new THREE.Mesh(mg, list[0].material); m.castShadow = list[0].castShadow; m.receiveShadow = list[0].receiveShadow; m.renderOrder = list[0].renderOrder; m.userData.merged = 1; m.userData.noscale = 1; s.add(m);
+      list.forEach(o => { if (o.parent) o.parent.remove(o); }); merged++; removed += list.length;
+    });
+    // 空掉的组也清掉，少遍历
+    const empties = []; s.traverse(o => { if ((o.isGroup || o.type === 'Object3D') && !o.children.length && !o.userData.glb && !o.userData.avatar && !o.userData.nomerge && o.parent) empties.push(o); }); empties.forEach(o => o.parent.remove(o));
+    s.userData.mergeStat = [merged, removed];
   }
   function floorLights(s, f) { const FL = s && s.userData.FL; if (!FL) return; FL[1].forEach(l => l.visible = f === 1); FL[2].forEach(l => l.visible = f === 2); }
   // 机位：look = 初始朝向点
@@ -2022,7 +2063,9 @@ const V3 = {};
     el.innerHTML = '<div class="walk-c"></div><div class="walk-l"></div><div class="walk-top"><button class="pill" data-w="back">全图</button><div class="walk-t"><b></b><small></small></div><div class="walk-i"></div></div><div class="walk-tip">' + (matchMedia('(pointer: coarse)').matches ? '左下摇杆走动 · 拖动环视 · 点地面走过去' : 'WASD / 方向键走动 · 拖动环视 · 点地面走过去') + '</div><div class="walk-wait">正在点灯……</div><canvas class="walk-mini" width="240" height="170"></canvas><div class="walk-l walk-pl"></div><div class="walk-joy"><i></i></div>';
     const cbox = el.querySelector('.walk-c'), lbox = el.querySelector('.walk-l'), wait = el.querySelector('.walk-wait');
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    LOOK.renderer(renderer, 1.1); renderer.shadowMap.autoUpdate = false;   // 场景是静的：阴影只在场景变了以后重算一次
+    LOOK.renderer(renderer, 1.1); renderer.shadowMap.autoUpdate = false;
+    const PRMAX = Math.min(window.devicePixelRatio || 1, LOOK.mobile ? 1.5 : 2), PRMIN = LOOK.mobile ? 0.75 : 1; let PRNOW = PRMAX; renderer.setPixelRatio(PRNOW);
+    if (LOOK.mobile) renderer.shadowMap.type = THREE.PCFShadowMap;   // 场景是静的：阴影只在场景变了以后重算一次
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     cbox.appendChild(renderer.domElement);
     const cam = new THREE.PerspectiveCamera(70, 1, 0.3, 1000);
@@ -2074,22 +2117,32 @@ const V3 = {};
       mg.fillStyle = '#ff5a3a'; mg.beginPath(); mg.arc(px, pz, 4, 0, 7); mg.fill();
     }
     /* ---------- 自由走动 ---------- */
-    const COL = {}, PR = 0.8, SPEED = 9;
-    function buildCol(s, f) {      // 碰撞盒（世界坐标 x/z）：墙 + 落地的家具；地毯、吊灯、细杆不挡
+    const COL = {}, PR = 0.62, SPEED = 9;
+    function buildCol(s, f) {      // 合批后用：静态部分在建楼时算好，照片扫描件加载完再补
+      const st = s.userData.colStatic && s.userData.colStatic[f]; if (!st) return colRaw(s, f, false);
+      return st.concat(colRaw(s, f, true));
+    }
+    V3._colRaw = (s, f) => colRaw(s, f, false);
+    function colRaw(s, f, glbOnly) {      // 碰撞盒（世界坐标 x/z）：墙 + 落地的家具；地毯、吊灯、细杆、小摆件不挡
       const y0 = f === 2 ? F2 : 0, out = [], bb = new THREE.Box3(), sz = new THREE.Vector3();
       s.updateMatrixWorld(true);
       const add = (b, src) => { if (b.isEmpty() || b.max.y < y0 + 0.5 || b.min.y > y0 + 4.6) return; const r = [b.min.x, b.min.z, b.max.x, b.max.z]; r.src = src; r.h = [b.min.y, b.max.y];
-        r.step = !!(src && src.isMesh && !src.userData.wall && src.geometry && src.geometry.type === 'BoxGeometry' && b.min.y < y0 + 0.3 && Math.min(b.max.x - b.min.x, b.max.z - b.min.z) >= 0.8); out.push(r); };   // 台阶、矮台：能踩上去   // 薄板（护墙、栏杆）不能踩
+        r.step = !!(src && src.isMesh && !src.userData.wall && src.geometry && src.geometry.type === 'BoxGeometry' && b.min.y < y0 + 0.3 && Math.min(b.max.x - b.min.x, b.max.z - b.min.z) >= 0.8); r.wall = !!(src && src.userData.wall);
+        if (!r.wall && !r.step) { const ix = Math.min(0.15, (r[2] - r[0]) * 0.15), iz = Math.min(0.15, (r[3] - r[1]) * 0.15); r[0] += ix; r[2] -= ix; r[1] += iz; r[3] -= iz; }   // 家具外框比看上去大，往里收一点
+        out.push(r); };   // 台阶、矮台：能踩上去   // 薄板（护墙、栏杆）不能踩
+      if (glbOnly) { s.traverse(o => { if (!o.userData.glb || o.userData.nocol) return; for (let q = o.parent; q; q = q.parent) if (q.userData && (q.userData.avatar || q.userData.nocol)) return;
+          bb.setFromObject(o); if (bb.isEmpty()) return; bb.getSize(sz); if (Math.max(sz.x, sz.z) > 14 || sz.y < 0.7 || Math.min(sz.x, sz.z) < 0.12 || (Math.max(sz.x, sz.z) < 1.1 && sz.y < 3.5)) return; add(bb, o); });
+        return out; }
       s.traverse(o => { if (o.isMesh && o.userData.wall) { bb.setFromObject(o); add(bb, o); } });
       // 收紧时被包成“结构件”的大方块（楼梯踏步、扶手墙）也要算：踏步能踩，扶手挡人
       s.traverse(o => { if (!o.isMesh || o.userData.wall || !o.geometry || o.geometry.type !== 'BoxGeometry') return; let q = o.parent, wrapped = false; while (q) { if (q.userData && q.userData.wrap) { wrapped = true; break; } q = q.parent; } if (!wrapped) return;
         const gp = o.geometry.parameters || {}; if (Math.min(gp.width || 0, gp.depth || 0) < 0.8 && !(Math.max(gp.width || 0, gp.depth || 0) > 6 && (gp.height || 0) > 2)) return;   // 门扇不算；长条护墙板算
         bb.setFromObject(o); if (bb.min.y < y0 + 0.3 && bb.max.y > y0 + 0.3 && bb.max.y < y0 + F2 + 0.5) add(bb, o); });
       const pick = list => list.forEach(o => {
-        if (o.isLight || o.isPoints || o.userData.noscale || o.userData.struct || o.userData.wall || o.userData.avatar || o.userData.nocol) return;
+        if (o.isLight || o.isPoints || o.userData.noscale || o.userData.struct || o.userData.wall || o.userData.avatar || o.userData.nocol || o.userData.glb) return;
         if ((o.isGroup || o.type === 'Object3D') && o.children.length > 1 && Math.abs(o.position.x) < 1e-6 && Math.abs(o.position.z) < 1e-6) { pick(o.children); return; }
         bb.setFromObject(o); if (bb.isEmpty()) return; bb.getSize(sz);
-        if (Math.max(sz.x, sz.z) > 14 || sz.y < 0.7 || Math.min(sz.x, sz.z) < 0.12) return;
+        if (Math.max(sz.x, sz.z) > 14 || sz.y < 0.7 || Math.min(sz.x, sz.z) < 0.12 || (Math.max(sz.x, sz.z) < 1.1 && sz.y < 3.5)) return;   // 花瓶、小桶这类小摆件不挡路
         add(bb, o); });
       pick(s.children);
       return out;
@@ -2152,6 +2205,9 @@ const V3 = {};
       const sp = SPEED * (KEYS.has('ShiftLeft') || KEYS.has('ShiftRight') ? 1.7 : 1) * dt, ox = pos.x, oz = pos.z;
       const nx = pos.x + vx * sp; if (!blocked(nx, pos.z, ox, oz)) pos.x = nx;
       const nz = pos.z + vz * sp; if (!blocked(pos.x, nz, ox, oz)) pos.z = nz;
+      if ((fw || st) && Math.hypot(pos.x - ox, pos.z - oz) < sp * 0.15) {      // 正面顶住了：左右各试几个角度，顺着边滑过去
+        for (const a of [0.6, -0.6, 1.1, -1.1]) { const c = Math.cos(a), sn = Math.sin(a), dx = (vx * c - vz * sn) * sp * 0.8, dz = (vx * sn + vz * c) * sp * 0.8;
+          if (!blocked(ox + dx, oz + dz, ox, oz)) { pos.x = ox + dx; pos.z = oz + dz; break; } } }
       const md = Math.hypot(pos.x - ox, pos.z - oz);
       if (target && md < sp * 0.2) { target = null; mark.visible = false; }       // 被挡住就停下
       ground = groundAt(pos.x, pos.z);
@@ -2199,14 +2255,24 @@ const V3 = {};
         const walking = d > 0.05, A = p.g.userData.anim;
         if (A) {
           if (walking !== A.walking && A.walk && A.idle) { A.walking = walking; const from = walking ? A.idle : A.walk, to = walking ? A.walk : A.idle; to.reset(); to.setEffectiveWeight(1); to.play(); from.crossFadeTo(to, 0.25, false); if (A.walk) A.walk.timeScale = 1.5; }
-          if (p.f === floor && Math.hypot(p.x * K - pos.x, p.z * K - pos.z) < 70) { A.mixer.update(NOANIM ? 0 : dt); if (!NOANIM || walking) any = true; }
+          A.acc = (A.acc || 0) + dt; const near = p.f === floor && Math.hypot(p.x * K - pos.x, p.z * K - pos.z) < (LOOK.mobile ? 40 : 70);
+          if (near && A.acc >= (LOOK.mobile ? 1 / 24 : 0)) { A.mixer.update(NOANIM ? 0 : A.acc); A.acc = 0; if (!NOANIM || walking) any = true; } else if (near && walking) any = true;
         }
       });
       return any;
     }
+    function wallBetween(x0, z0, x1, z1) {      // 两点连线有没有穿过墙（只看墙，门洞看得见）
+      const L = COL[floor]; if (!L) return false; const dx = x1 - x0, dz = z1 - z0;
+      for (let i = 0; i < L.length; i++) { const b = L[i]; if (!b.wall) continue; let t0 = 0, t1 = 1;
+        if (Math.abs(dx) < 1e-6) { if (x0 < b[0] || x0 > b[2]) continue; } else { let a = (b[0] - x0) / dx, c = (b[2] - x0) / dx; if (a > c) { const t = a; a = c; c = t; } t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 > t1) continue; }
+        if (Math.abs(dz) < 1e-6) { if (z0 < b[1] || z0 > b[3]) continue; } else { let a = (b[1] - z0) / dz, c = (b[3] - z0) / dz; if (a > c) { const t = a; a = c; c = t; } t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 > t1) continue; }
+        return true; }
+      return false;
+    }
     function peerLabels() {
       PEERS.forEach(p => {
         if (!p.g || p.f !== floor) { p.lab.style.display = 'none'; return; }
+        if (Math.hypot(p.x * K - pos.x, p.z * K - pos.z) > 45 || wallBetween(pos.x, pos.z, p.x * K, p.z * K)) { p.lab.style.display = 'none'; return; }
         PV.set(p.x * K, (p.gy ?? (p.f === 2 ? F2 : 0)) + 5.4, p.z * K); const dist = PV.distanceTo(pos); PV.project(cam);
         const x = (PV.x + 1) / 2 * W, y = (1 - PV.y) / 2 * H;
         if (PV.z > 1 || dist > 70 || x < -50 || x > W + 50 || y < -30 || y > H + 30) { p.lab.style.display = 'none'; return; }
@@ -2221,11 +2287,14 @@ const V3 = {};
 
       if (tw) { const t = Math.min(1, (performance.now() - tw.t0) / 700), e = t * t * (3 - 2 * t); pos.lerpVectors(tw.a, tw.b, e); yaw = tw.y0 + (tw.y1 - tw.y0) * e; if (t >= 1) tw = null; need = true; }
       const now = performance.now();
-      if (upAt && cur && now - upAt > 400) { upAt = 0; LOOK.upgrade(cur); renderer.shadowMap.needsUpdate = true; need = true; }          // 新载入的模型、人物也补上材质
+      if (upAt && cur && now - upAt > 400) { upAt = 0; LOOK.upgrade(cur); renderer.shadowMap.needsUpdate = true; need = true; delete COL[1]; delete COL[2]; COL[floor] = buildCol(cur, floor); }          // 新载入的模型、人物也补上材质
       if (DUST_MS && cur && cur.userData.dust && now - lastDust > DUST_MS) { lastDust = now; cur.userData.dust.userData.tick(now / 1000, cam, floor === 2 ? F2 : 0); need = true; }   // 浮尘约 30 帧
-      if (!need || !cur) return; need = false; place(); renderer.render(cur, cam); labels(); peerLabels(); drawMini();
+      if (!need || !cur) return; need = false;
+      { const t = performance.now(); if (lastR && t - lastR < 100) { ftE = ftE * 0.92 + (t - lastR) * 0.08; if (t - lastAdj > 2000) { lastAdj = t;   // 连续渲染时看帧间隔：卡就降分辨率，顺就升回来
+          const np = ftE > 26 ? Math.max(PRMIN, PRNOW - 0.15) : ftE < 15 ? Math.min(PRMAX, PRNOW + 0.1) : PRNOW; if (Math.abs(np - PRNOW) > 0.01) { PRNOW = np; renderer.setPixelRatio(PRNOW); renderer.setSize(W, H, false); } } } lastR = t; }
+      place(); renderer.render(cur, cam); labels(); peerLabels(); drawMini();
     }
-    let raf = 0, lastDust = 0;
+    let raf = 0, lastDust = 0, lastR = 0, ftE = 16, lastAdj = 0;
     const DUST_MS = /nodust/.test(location.search) ? 0 : (LOOK.mobile ? 66 : 40);   // 浮尘刷新：电脑约 25 帧，手机约 15 帧
     let upAt = 0; V3.onModel = () => { need = true; upAt = performance.now(); };
     function yawTo(v, x, z) { return Math.atan2((x - v.at[0]) * K, (z - v.at[1]) * K); }
