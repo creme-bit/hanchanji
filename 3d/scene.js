@@ -87,8 +87,8 @@ const SCENE = {};
     M.table(s, 102.6, 67.7, 5.2, 3.4, 2.7, 0, '#4a2e1c'); M.box(s, 2.8, 1.2, 2.2, 102.6, 2.7, 67.7, '#3a1f12'); M.box(s, 1.8, 2.6, 0.2, 102.6, 2.7, 66.2, M.mat('#cfd8d8', { metalness: 0.6, roughness: 0.15 }));
     M.screen(s, 84.5, 86, 3, 3);
     // 楼梯
-    for (let i = 0; i < 14; i++) M.box(s, 13.6, 0.45 * (i + 1), 1.63, 115, 0, 62 - i * 1.63 - 0.8, i % 2 ? '#a5794c' : '#9a6e44');
-    M.box(s, 0.4, 7, 22.8, 108.4, 0, 51, '#3f2516'); M.box(s, 0.4, 7, 22.8, 121.6, 0, 51, '#3f2516');
+    for (let i = 0; i < 14; i++) M.box(s, 8, F2 / 14 * (i + 1), 1.2, 113, 0, 39.6 + i * 1.2 + 0.6, i % 2 ? '#a5794c' : '#9a6e44').userData.struct = 1;   // 结构件：随平面一起收紧
+    M.box(s, 0.4, F2, 16.8, 108.8, 0, 48, '#3f2516');   // 楼梯西侧的护墙板
     // 下人房
     M.bed(s, 110, 74.5, 5, 9, 0, false); M.bed(s, 120, 74.5, 5, 9, 0, false); M.box(s, 4, 3, 6, 115, 0, 85, '#6b4a2e');
     // 厨房
@@ -99,7 +99,7 @@ const SCENE = {};
     M.vat(s, 146.8, 56, 1.4); M.vat(s, 146.8, 83, 1.1);
     M.box(s, 16, 4, 2.6, 134, 0, 87.6, '#5a3a24');
     // 后廊、洗手间
-    M.vat(s, 115, 34, 1.3); M.basin(s, 142, 35); M.toilet(s, 147.5, 35.5);
+    M.vat(s, 100, 32.3, 1.3); M.basin(s, 142, 35); M.toilet(s, 147.5, 35.5);
   }
 
   function massing1F(s) {
@@ -115,11 +115,11 @@ const SCENE = {};
   function secondFloor(s) {
     const y = F2, g = M.group(s, 0, y, 0);
     M.floor(g, 0, 30, 52, 52, TX.plank(), 12); M.floor(g, 52, 30, 106, 52, TX.plank([170, 122, 80]), 12); M.floor(g, 124, 30, 150, 52, TX.plank(), 12);
-    M.floor(g, 0, 52, 150, 60, TX.terrazzo(), 8);
+    M.floor(g, 106, 30, 124, 48, TX.plank(), 12); M.floor(g, 106, 48, 109, 52, TX.plank(), 12); M.floor(g, 117, 48, 124, 52, TX.plank(), 12);
+    M.floor(g, 0, 52, 109, 60, TX.terrazzo(), 8); M.floor(g, 117, 52, 150, 60, TX.terrazzo(), 8); M.floor(g, 109, 56.4, 117, 60, TX.terrazzo(), 8);
+    [M.box(g, 0.3, 2.8, 8.4, 108.85, 0, 52.2, '#6a4028'), M.box(g, 0.3, 2.8, 8.4, 117.15, 0, 52.2, '#6a4028'), M.box(g, 8.6, 2.8, 0.3, 113, 0, 47.85, '#6a4028')].forEach(o => o.userData.struct = 1);   // 楼梯口围栏
     M.floor(g, 0, 60, 50, 90, TX.plank(), 12); M.floor(g, 50, 60, 100, 90, TX.plank([160, 112, 70]), 12); M.floor(g, 100, 60, 150, 90, TX.plank([150, 116, 84]), 12);
     // 楼梯井
-    M.box(g, 14, 0.1, 22, 115, 0.01, 41, '#1d1814');
-    for (let i = 0; i < 8; i++) M.box(g, 13.6, 0.4, 1.63, 115, -0.4 - i * 0.45, 31 + i * 1.63, '#9a6e44');
     // 露台
     M.box(s, 150, 1, 14, 75, F2 - 1, 97, '#cfc5ae');
     M.floor(g, 0, 90, 150, 104, TX.square(), 6, 0.02);
@@ -181,5 +181,6 @@ const SCENE = {};
 
   SCENE.buildGround = (s) => { yards(s); firstFloor(s); };
   SCENE.buildUpper = (s) => { yards(s); massing1F(s); secondFloor(s); };
+  SCENE.buildHouse = (s) => { yards(s); firstFloor(s); secondFloor(s); };
   SCENE.F2 = F2;
 })();
