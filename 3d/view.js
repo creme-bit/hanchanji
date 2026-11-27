@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=31' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=32' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -1670,7 +1670,7 @@ const V3 = {};
     m.userData.look = 'cloth'; return m;
   }
   function avatar(s, x, y, z, faceY, o = {}) {
-    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = faceY; g.userData.nomerge = 1; s.add(g);
+    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = faceY; g.userData.nomerge = 1; s.add(g); (window._av = window._av || []).push(g);
     if (!gltfLoader) gltfLoader = new THREE.GLTFLoader();
     if (o.ai) { aiAvatar(g, o); return g; }
     const female = !!o.bun, MH = !!o.mh;   // MH：MakeHuman 写实亚洲人（CC0）；否则 Quaternius
@@ -1901,10 +1901,10 @@ const V3 = {};
     // 空气里的浮尘按要求去掉
     [[ROOMS1, 0], [ROOMS2, F2]].forEach(([R, y0]) => R.forEach(([x, z]) => { const k = DIM[x + ',' + z] ?? 1; const l = new THREE.PointLight(0xfff1e6, 54 * k, 32, 1.6); l.position.set(x, y0 + IH - 4.2, z); s.add(l); }));
     { const l = new THREE.PointLight(0xffe2b8, 22, 12, 1.5); l.position.set(71.8, F2 + 4.3, 75.9); s.add(l); }
-    // 人物（模型面朝 +x，faceY 让它转向）：老号伙计、前院车夫、前厅老周、厨房厨娘
-    avatar(s, -23, 0, 12.4, -Math.PI / 2, { mh: 'm_mid', pose: 'counter', top: '#4a4236', vest: '#1e1c1a', hat: 'gua', glasses: true });
+    // 人物（模型面朝 +x，faceY 让它转向）：老号门口的老李、前院车夫、前院巡夜的老周、厨房厨娘——都站在各自的标志下
+    avatar(s, -9.5, 0, 20.5, Math.PI, { mh: 'm_mid', pose: 'rest', top: '#4a4236', vest: '#1e1c1a', hat: 'gua', glasses: true });
     avatar(s, 70.5, 0, 101.5, Math.PI * 0.75, { mh: 'm_young', pose: 'rest', top: '#2e3e58', bottom: '#22262c', hat: 'straw' });
-    avatar(s, 34.5, 0, 83.5, Math.PI * 0.2, { mh: 'm_old', pose: 'lantern', top: '#5a5a56', vest: '#151413', gown: 1, hat: 'gua', mustache: 1 });
+    avatar(s, 40, 0, 104.5, Math.PI / 2, { mh: 'm_old', pose: 'lantern', top: '#5a5a56', vest: '#151413', gown: 1, hat: 'gua', mustache: 1 });
     avatar(s, 140.7, 0, 47.4, Math.PI / 2, { mh: 'f_mid', pose: 'stir', top: '#3a4a5a', bottom: '#2a2a2e', apron: '#d8d0c0', bun: 1, h: 2.45 });
     { const lt = new THREE.PointLight(0xffa850, 60, 26, 1.6); lt.position.set(40, 6, 104); s.add(lt); const lt2 = new THREE.PointLight(0xffa850, 40, 22, 1.6); lt2.position.set(17, 7, 21); s.add(lt2); }
     compress(s);
