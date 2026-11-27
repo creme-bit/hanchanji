@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=25' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=26' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -1672,64 +1672,78 @@ const V3 = {};
   function avatar(s, x, y, z, faceY, o = {}) {
     const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = faceY; g.userData.nomerge = 1; s.add(g);
     if (!gltfLoader) gltfLoader = new THREE.GLTFLoader();
-    const female = !!o.bun;
-    Promise.all([new Promise((res, rej) => gltfLoader.load('3d/models/' + (female ? 'qm_female' : 'qm_male') + '.glb', res, undefined, rej)), qAnims()]).then(([gl, clips]) => {
+    const female = !!o.bun, MH = !!o.mh;   // MH：MakeHuman 写实亚洲人（CC0）；否则 Quaternius
+    const file = MH ? 'mh_' + o.mh : (female ? 'qm_female' : 'qm_male');
+    const RIG = MH ? { head: 'head', pelvis: 'root', handR: 'wrist.R' } : { head: 'Head', pelvis: 'pelvis', handR: 'hand_r' };
+    Promise.all([new Promise((res, rej) => gltfLoader.load('3d/models/' + file + '.glb', res, undefined, rej)), MH ? Promise.resolve(null) : qAnims()]).then(([gl, clips0]) => {
+      const clips = MH ? Object.fromEntries(gl.animations.map(a => [a.name, a])) : clips0;
       const m = gl.scenes[0], bones = {}; let body = null;
-      m.traverse(q => { if (q.isBone) bones[q.name] = q; if (q.isSkinnedMesh && (!body || q.geometry.attributes.position.count > body.geometry.attributes.position.count)) body = q; });
+      m.traverse(q => { if (q.isBone) bones[q.name] = q; if (q.isSkinnedMesh && (MH ? q.material && q.material.name === 'skin' : (!body || q.geometry.attributes.position.count > body.geometry.attributes.position.count))) body = q; });
       if (!body) throw new Error('no body');
       m.updateMatrixWorld(true);
-      const head = bones['Head'], V = new THREE.Vector3(), V2 = new THREE.Vector3();
-      // 头发：静止姿态下摆好，再挂到头骨上跟着动；颜色压成乌黑
-      const hs = gl.scenes[female ? (o.hair === 'buns' ? 2 : 1) : 1]; const hairBox = new THREE.Box3();
-      if (hs && head) { hs.updateMatrixWorld(true); const list = []; hs.traverse(q => { if (q.isMesh) list.push(q); });
-        list.forEach(q => { hairBox.expandByObject(q); q.material = q.material.clone(); q.material.color.set(o.hairColor || 0x3a2a20); q.material.userData.look = 'hair'; q.castShadow = !o.dyn; head.attach(q); }); }
-      m.traverse(q => { if (q.isMesh && q !== body && q.material && /Hair/.test(q.material.name || '')) { q.material = q.material.clone(); q.material.color.set(o.hairColor || 0x3a2a20); q.material.userData.look = 'hair'; } });   // 眉毛
-      body.material.userData.look = 'skin';
+      const bb0 = new THREE.Box3().setFromObject(body), U = (bb0.max.y - bb0.min.y) / 1.75;   // 1 米折多少模型单位
+      const head = bones[RIG.head], V = new THREE.Vector3(), V2 = new THREE.Vector3();
+      const hairBox = new THREE.Box3();
+      if (MH) { m.traverse(q => { if (q.isMesh && q.material) { const n = q.material.name; q.material.userData.look = n === 'skin' ? 'skin' : 'hair'; if (n === 'hair') { if (o.hairColor) q.material.color.set(o.hairColor); hairBox.expandByObject(q); } q.castShadow = !o.dyn; } }); }
+      else {   // Quaternius：头发在静止姿态下挂到头骨上
+        const hs = gl.scenes[female ? (o.hair === 'buns' ? 2 : 1) : 1];
+        if (hs && head) { hs.updateMatrixWorld(true); const list = []; hs.traverse(q => { if (q.isMesh) list.push(q); });
+          list.forEach(q => { hairBox.expandByObject(q); q.material = q.material.clone(); q.material.color.set(o.hairColor || 0x3a2a20); q.material.userData.look = 'hair'; q.castShadow = !o.dyn; head.attach(q); }); }
+        m.traverse(q => { if (q.isMesh && q !== body && q.material && /Hair/.test(q.material.name || '')) { q.material = q.material.clone(); q.material.color.set(o.hairColor || 0x3a2a20); q.material.userData.look = 'hair'; } });
+        body.material.userData.look = 'skin';
+      }
       // 衣服：把身体网格沿法线外扩一层，只留对应部位的三角形
       const geo = body.geometry, pos = geo.attributes.position, nor = geo.attributes.normal, si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight, idx = geo.index.array;
-      const PB = body.skeleton.bones.map(b => QPART(b.name)), VP = new Array(pos.count);
+      const partMH = b => { for (let q = b; q && q.isBone; q = q.parent) { const n = q.name; if (n === 'head') return 'head'; if (/^neck0/.test(n)) return 'neck'; if (/^(wrist|finger|metacarpal)/.test(n)) return 'hand'; if (/^(foot|toe)/.test(n)) return 'foot'; if (/^(upperleg|lowerleg)/.test(n)) return 'leg'; if (/^(upperarm|lowerarm)/.test(n)) return 'arm'; } return 'torso'; };
+      const PB = body.skeleton.bones.map(b => MH ? partMH(b) : QPART(b.name)), VP = new Array(pos.count);
       const CMP = (at, i, k) => k === 0 ? at.getX(i) : k === 1 ? at.getY(i) : k === 2 ? at.getZ(i) : at.getW(i);
       for (let v = 0; v < pos.count; v++) { const acc = {}; for (let k = 0; k < 4; k++) { const p2 = PB[CMP(si, v, k)], w = CMP(sw, v, k); acc[p2] = (acc[p2] || 0) + w; } let best = null, bw = -1; for (const k in acc) if (acc[k] > bw) { bw = acc[k]; best = k; } VP[v] = best; }
-      const shell = (parts, off, mat, need = 1) => { const g2 = geo.clone(), p2 = g2.attributes.position;
-        for (let i = 0; i < pos.count; i++) p2.setXYZ(i, pos.getX(i) + nor.getX(i) * off, pos.getY(i) + nor.getY(i) * off, pos.getZ(i) + nor.getZ(i) * off);
+      const NX = (i, k) => k === 0 ? nor.getX(i) : k === 1 ? nor.getY(i) : nor.getZ(i);
+      geo.computeBoundingBox(); const LS = U / ((geo.boundingBox.max.y - geo.boundingBox.min.y) / 1.75 || U);   // 量化过的网格带缩放：外扩量按网格自己的单位算
+      const shell = (parts, off, mat, need = 1) => { const g2 = new THREE.BufferGeometry(), p2 = new Float32Array(pos.count * 3); off *= U / LS;
+        for (let i = 0; i < pos.count; i++) { p2[i * 3] = pos.getX(i) + NX(i, 0) * off; p2[i * 3 + 1] = pos.getY(i) + NX(i, 1) * off; p2[i * 3 + 2] = pos.getZ(i) + NX(i, 2) * off; }
+        g2.setAttribute('position', new THREE.BufferAttribute(p2, 3)); g2.setAttribute('normal', nor); g2.setAttribute('skinIndex', si); g2.setAttribute('skinWeight', sw); if (geo.attributes.uv) g2.setAttribute('uv', geo.attributes.uv);
         const ni = []; for (let t = 0; t < idx.length; t += 3) { const c = parts.includes(VP[idx[t]]) + parts.includes(VP[idx[t + 1]]) + parts.includes(VP[idx[t + 2]]); if (c >= need) ni.push(idx[t], idx[t + 1], idx[t + 2]); }
-        g2.setIndex(ni); g2.clearGroups(); const sm = new THREE.SkinnedMesh(g2, mat); sm.bind(body.skeleton, body.bindMatrix); sm.castShadow = !o.dyn; sm.frustumCulled = false; body.parent.add(sm); return sm; };
+        g2.setIndex(ni); const sm = new THREE.SkinnedMesh(g2, mat); sm.bind(body.skeleton, body.bindMatrix); sm.castShadow = !o.dyn; sm.frustumCulled = false; body.parent.add(sm); return sm; };
       const top = o.top || '#3a3a40', bottom = o.bottom || top, gown = !!o.gown;
-      shell(gown || female ? ['torso', 'arm', 'neck'] : ['torso', 'arm'], gown ? 0.022 : 0.017, fabric(top), gown || female ? 2 : 1);   // 衣服放宽一点，不贴出肌肉
+      shell((gown || female) && !MH ? ['torso', 'arm', 'neck'] : ['torso', 'arm'], gown ? 0.022 : 0.017, fabric(top), gown || female ? 2 : 1);
       shell(['leg'], 0.009, fabric(female && !o.bottom ? '#2a2522' : bottom));
       shell(['foot'], 0.012, new THREE.MeshStandardMaterial({ color: female ? 0x2a1a14 : 0x141110, roughness: 0.45 }), 1);
-      if (o.vest) shell(['torso'], 0.022, fabric(o.vest, 0.8));
-      if (o.apron) shell(['torso'], 0.02, fabric(o.apron));
-      // 长衫、旗袍下摆：从腰垂到脚踝（挂在模型根上，走路时腿在里面摆）
-      const pel = bones['pelvis'];
-      if (gown && pel) { pel.getWorldPosition(V); const bb = new THREE.Box3().setFromObject(body); const ankle = bb.min.y + 0.1 * (bb.max.y - bb.min.y), hip = V.y + 0.06;
-        const H = hip - ankle, R = female ? [0.16, 0.17, 0.18, 0.2] : [0.17, 0.21, 0.25, 0.28];
+      if (o.vest) shell(['torso'], 0.03, fabric(o.vest, 0.8));
+      if (o.apron) shell(['torso'], 0.028, fabric(o.apron));
+      // 长衫、旗袍下摆：从腰垂到脚踝，挂在骨盆上
+      const pel = bones[RIG.pelvis];
+      if (gown && pel) { pel.getWorldPosition(V); const bb = bb0; const ankle = bb.min.y + 0.1 * (bb.max.y - bb.min.y), hip = V.y + 0.06 * U;
+        const H = hip - ankle, R = (female ? [0.16, 0.17, 0.18, 0.2] : [0.17, 0.21, 0.25, 0.28]).map(r => r * U);
         const sk = new THREE.Mesh(new THREE.LatheGeometry([[R[0], 0], [R[1], -H * 0.3], [R[2], -H * 0.7], [R[3], -H]].map(([a, b]) => new THREE.Vector2(a, b)), 24), fabric(top));
         sk.position.set(V.x, hip, V.z); sk.scale.set(1, 1, 0.78); sk.castShadow = !o.dyn; m.add(sk); pel.attach(sk); }
+      // 朝向：MakeHuman 面朝 +z；Quaternius 看脚尖方向
+      let fx = 0, fz = 1;
+      if (!MH) { const bl = bones['ball_l'], fl = bones['foot_l']; if (bl && fl) { bl.getWorldPosition(V2); const a = V2.clone(); fl.getWorldPosition(V2); fx = a.x - V2.x; fz = a.z - V2.z; const l = Math.hypot(fx, fz) || 1; fx /= l; fz /= l; } }
       // 帽子、眼镜：在静止姿态里算好位置，挂到头骨上
-      if (head) { head.getWorldPosition(V); const topY = hairBox.isEmpty() ? V.y + 0.22 : hairBox.max.y;
-        const bl = bones['ball_l'], fl = bones['foot_l']; let fx = 0, fz = 1; if (bl && fl) { bl.getWorldPosition(V2); const a = V2.clone(); fl.getWorldPosition(V2); fx = a.x - V2.x; fz = a.z - V2.z; const l = Math.hypot(fx, fz) || 1; fx /= l; fz /= l; }
-        if (o.hat === 'gua') { const h = new THREE.Mesh(new THREE.SphereGeometry(0.118, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.45), new THREE.MeshStandardMaterial({ color: 0x0e0d0c, roughness: 0.45 })); h.position.set(V.x, topY - 0.075, V.z); h.scale.set(1, 0.9, 1.08); m.add(h); head.attach(h);
-          const kn = new THREE.Mesh(new THREE.SphereGeometry(0.017, 8, 6), new THREE.MeshStandardMaterial({ color: 0xa01810 })); kn.position.set(V.x, topY + 0.03, V.z); m.add(kn); head.attach(kn); }
-        if (o.glasses) { let eb = new THREE.Box3(); m.traverse(q => { if (q.isMesh && /Eye/.test((q.material && q.material.name) || '')) eb.expandByObject(q); });
-          if (!eb.isEmpty()) { eb.getCenter(V2); const gm2 = new THREE.MeshStandardMaterial({ color: 0x8a7a50, metalness: 0.8, roughness: 0.3 }); const side = new THREE.Vector3(fz, 0, -fx);
-            [-1, 1].forEach(e => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.021, 0.003, 6, 18), gm2); r.position.set(V2.x + side.x * e * 0.033 + fx * 0.045, V2.y + 0.004, V2.z + side.z * e * 0.033 + fz * 0.045); r.lookAt(r.position.x + fx, r.position.y, r.position.z + fz); m.add(r); head.attach(r); }); } }
-        // 统一朝向 +x、按身高缩放、脚踩地
-        const wrap = new THREE.Group(); wrap.add(m); wrap.rotation.y = Math.atan2(fz, fx);
-        const bb = new THREE.Box3().setFromObject(body); const S = (o.h ? o.h * 1.78 : (female ? 4.35 : 4.65)) / (bb.max.y - bb.min.y);
-        const side = Math.abs(fz) >= Math.abs(fx);   // 免费版身材是“超级英雄”比例：肩宽、胸厚收一收
-        wrap.scale.set(S * (side ? 0.86 : 0.93), S, S * (side ? 0.93 : 0.86)); wrap.position.y = -bb.min.y * S;
-        g.add(wrap);
-        // 灯笼：挂在右手
-        if (o.pose === 'lantern' && bones['hand_r']) { const lt = new THREE.Group(); const hp = new THREE.Vector3(); wrap.updateMatrixWorld(true); bones['hand_r'].getWorldPosition(hp); g.worldToLocal(hp);
-          const pm = new THREE.MeshStandardMaterial({ color: 0xf0d8a8, emissive: 0xffa040, emissiveIntensity: 1.2, roughness: 0.8 }); pm.userData.look = 'skin';
-          const bd = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 12), pm); bd.scale.set(1, 1.25, 1); bd.position.y = -0.42; lt.add(bd);
-          const pl = new THREE.PointLight(0xffb060, 2.2, 9, 1.8); pl.position.y = -0.42; lt.add(pl); lt.position.copy(hp); g.add(lt); bones['hand_r'].attach(lt); }
+      if (head) { head.getWorldPosition(V); const topY = hairBox.isEmpty() ? V.y + 0.22 * U : hairBox.max.y;
+        if (o.hat === 'gua') { const h = new THREE.Mesh(new THREE.SphereGeometry((MH ? 0.1 : 0.118) * U, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.45), new THREE.MeshStandardMaterial({ color: 0x0e0d0c, roughness: 0.45 })); h.material.userData.look = 'hair';
+          const hb = hairBox.isEmpty() ? null : hairBox.getCenter(new THREE.Vector3()); h.position.set(hb ? hb.x : V.x, topY - (MH ? 0.085 : 0.075) * U, hb ? hb.z : V.z); h.scale.set(1, 0.9, 1.08); m.add(h); head.attach(h);
+          const kn = new THREE.Mesh(new THREE.SphereGeometry(0.017 * U, 8, 6), new THREE.MeshStandardMaterial({ color: 0xa01810 })); kn.position.set(h.position.x, h.position.y + (MH ? 0.1 : 0.118) * U * 0.88, h.position.z); m.add(kn); head.attach(kn); }
+        if (o.glasses) { const eb = new THREE.Box3(); m.traverse(q => { if (q.isMesh && /^(eye|MI_Eyes)/i.test((q.material && q.material.name) || '')) eb.expandByObject(q); });
+          if (!eb.isEmpty()) { eb.getCenter(V2); const gm2 = new THREE.MeshStandardMaterial({ color: 0x8a7a50, metalness: 0.8, roughness: 0.3 }); gm2.userData.look = 'hair'; const side = new THREE.Vector3(fz, 0, -fx), hw = (eb.max.x - eb.min.x) / 2;
+            [-1, 1].forEach(e => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.021 * U, 0.003 * U, 6, 18), gm2); const sx = MH ? hw * 0.72 : 0.033 * U;
+              r.position.set(V2.x + side.x * e * sx + fx * 0.045 * U, V2.y + 0.004 * U, V2.z + side.z * e * sx + fz * 0.045 * U); r.lookAt(r.position.x + fx, r.position.y, r.position.z + fz); m.add(r); head.attach(r); }); } }
       }
+      // 统一朝向 +x、按身高缩放、脚踩地
+      const wrap = new THREE.Group(); wrap.add(m); wrap.rotation.y = Math.atan2(fz, fx);
+      const S = (o.h ? o.h * 1.78 : (female ? 4.35 : 4.65)) / (bb0.max.y - bb0.min.y), side = Math.abs(fz) >= Math.abs(fx), slim = MH ? 1 : 0.86, slim2 = MH ? 1 : 0.93;   // Quaternius 是“超级英雄”身材，收一收
+      wrap.scale.set(S * (side ? slim : slim2), S, S * (side ? slim2 : slim)); wrap.position.y = -bb0.min.y * S;
+      g.add(wrap);
+      if (o.pose === 'lantern' && bones[RIG.handR]) { const lt = new THREE.Group(); const hp = new THREE.Vector3(); wrap.updateMatrixWorld(true); bones[RIG.handR].getWorldPosition(hp); g.worldToLocal(hp);
+        const pm = new THREE.MeshStandardMaterial({ color: 0xf0d8a8, emissive: 0xffa040, emissiveIntensity: 1.2, roughness: 0.8 }); pm.userData.look = 'skin';
+        const bd = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 12), pm); bd.scale.set(1, 1.25, 1); bd.position.y = -0.42; lt.add(bd);
+        const pl = new THREE.PointLight(0xffb060, 2.2, 9, 1.8); pl.position.y = -0.42; lt.add(pl); lt.position.copy(hp); g.add(lt); bones[RIG.handR].attach(lt); }
       m.traverse(q => { if (q.isMesh) { q.frustumCulled = false; if (o.dyn) q.castShadow = false; } });
       // 动作
       const mixer = new THREE.AnimationMixer(m), A = n => clips[n] ? mixer.clipAction(clips[n]) : null;
-      const idle = A(o.pose === 'lantern' ? 'Idle_Torch_Loop' : 'Idle_Loop'), walk = A(female ? 'Walk_Loop' : 'Walk_Formal_Loop');
+      const idle = MH ? A(o.pose === 'lantern' ? 'torch' : 'idle') : A(o.pose === 'lantern' ? 'Idle_Torch_Loop' : 'Idle_Loop');
+      const walk = MH ? A(female ? 'walkF' : 'walk') : A(female ? 'Walk_Loop' : 'Walk_Formal_Loop');
       if (idle) { idle.play(); idle.time = Math.random() * 2; }
       mixer.update(0.01);
       g.userData.anim = { mixer, idle, walk, walking: false, still: !o.dyn };
@@ -1842,10 +1856,10 @@ const V3 = {};
     [[ROOMS1, 0], [ROOMS2, F2]].forEach(([R, y0]) => R.forEach(([x, z]) => { const k = DIM[x + ',' + z] ?? 1; const l = new THREE.PointLight(0xfff1e6, 54 * k, 32, 1.6); l.position.set(x, y0 + IH - 4.2, z); s.add(l); }));
     { const l = new THREE.PointLight(0xffe2b8, 22, 12, 1.5); l.position.set(71.8, F2 + 4.3, 75.9); s.add(l); }
     // 人物（模型面朝 +x，faceY 让它转向）：老号伙计、前院车夫、前厅老周、厨房厨娘
-    avatar(s, -23, 0, 12.4, -Math.PI / 2, { pose: 'counter', top: '#4a4236', vest: '#1e1c1a', hat: 'gua', glasses: true });
-    avatar(s, 70.5, 0, 101.5, Math.PI * 0.75, { pose: 'rest', top: '#2e3e58', bottom: '#22262c', hat: 'straw' });
-    avatar(s, 34.5, 0, 83.5, Math.PI * 0.2, { pose: 'lantern', top: '#5a5a56', vest: '#151413', gown: 1, hat: 'gua', mustache: 1 });
-    avatar(s, 140.7, 0, 47.4, Math.PI / 2, { pose: 'stir', top: '#3a4a5a', bottom: '#2a2a2e', apron: '#d8d0c0', bun: 1, h: 2.45 });
+    avatar(s, -23, 0, 12.4, -Math.PI / 2, { mh: 'm_mid', pose: 'counter', top: '#4a4236', vest: '#1e1c1a', hat: 'gua', glasses: true });
+    avatar(s, 70.5, 0, 101.5, Math.PI * 0.75, { mh: 'm_young', pose: 'rest', top: '#2e3e58', bottom: '#22262c', hat: 'straw' });
+    avatar(s, 34.5, 0, 83.5, Math.PI * 0.2, { mh: 'm_old', pose: 'lantern', top: '#5a5a56', vest: '#151413', gown: 1, hat: 'gua', mustache: 1 });
+    avatar(s, 140.7, 0, 47.4, Math.PI / 2, { mh: 'f_mid', pose: 'stir', top: '#3a4a5a', bottom: '#2a2a2e', apron: '#d8d0c0', bun: 1, h: 2.45 });
     { const lt = new THREE.PointLight(0xffa850, 60, 26, 1.6); lt.position.set(40, 6, 104); s.add(lt); const lt2 = new THREE.PointLight(0xffa850, 40, 22, 1.6); lt2.position.set(17, 7, 21); s.add(lt2); }
     compress(s);
     clearDoors(s, 1); clearDoors(s, 2);
@@ -2224,11 +2238,11 @@ const V3 = {};
     }
     /* ---------- 其他玩家：人物模型 + 名牌，位置平滑插值，走路摆腿 ---------- */
     const OUTFIT = {
-      '01': { top: '#3a3328', vest: '#18160f', gown: 1, hat: 'gua', glasses: true }, '02': { top: '#cfcac0', bottom: '#2b2b30', bun: 1, h: 2.45, hairColor: 0x2a2018 },
-      '03': { top: '#2d3340', bottom: '#2d3340' }, '04': { top: '#4a2430', gown: 1, bun: 1, h: 2.42 },
-      '05': { top: '#3c3a36', vest: '#121110', gown: 1, hat: 'gua', mustache: 1 }, '06': { top: '#2f3a44', gown: 1 },
-      '07': { top: '#7a1e2a', gown: 1, bun: 1, h: 2.42 }, '08': { top: '#2a2622', vest: '#3a2a18', gown: 1, mustache: 1, glasses: true },
-      '09': { top: '#57503f', bottom: '#38322c', glasses: true }, '10': { top: '#34404a', gown: 1, bun: 1, h: 2.44, hair: 'buns' },
+      '01': { mh: 'm_mid', top: '#3a3328', vest: '#18160f', gown: 1, hat: 'gua', glasses: true }, '02': { mh: 'f_mid', top: '#cfcac0', bottom: '#2b2b30', bun: 1, h: 2.45 },
+      '03': { mh: 'm_young', top: '#2d3340', bottom: '#2d3340' }, '04': { mh: 'f_mid', top: '#4a2430', gown: 1, bun: 1, h: 2.42 },
+      '05': { mh: 'm_mid', top: '#3c3a36', vest: '#121110', gown: 1, hat: 'gua', mustache: 1 }, '06': { mh: 'm_young', top: '#2f3a44', gown: 1 },
+      '07': { mh: 'f_young', top: '#7a1e2a', gown: 1, bun: 1, h: 2.42 }, '08': { mh: 'm_old', top: '#2a2622', vest: '#3a2a18', gown: 1, mustache: 1, glasses: true },
+      '09': { mh: 'm_young', top: '#57503f', bottom: '#38322c', glasses: true }, '10': { mh: 'f_young', top: '#34404a', gown: 1, bun: 1, h: 2.44 },
     };
     const NOANIM = /noanim/.test(location.search);   // 测试用：人物不动画，截图不卡
     const PEERS = new Map(), pbox = el.querySelector('.walk-pl'), PQ = new THREE.Quaternion(), PAX = new THREE.Vector3(1, 0, 0), PV = new THREE.Vector3();
