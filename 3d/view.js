@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=29' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=30' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -2120,7 +2120,7 @@ const V3 = {};
 
   function makeWalk() {
     const el = document.createElement('div'); el.className = 'walk';
-    el.innerHTML = '<div class="walk-c"></div><div class="walk-l"></div><div class="walk-top"><button class="pill" data-w="back">全图</button><div class="walk-t"><b></b><small></small></div><div class="walk-i"></div><button class="pill walk-q" data-w="q">画质</button></div><div class="walk-tip">' + (matchMedia('(pointer: coarse)').matches ? '左下摇杆走动 · 拖动环视 · 点地面走过去' : 'WASD / 方向键走动 · 拖动环视 · 点地面走过去') + '</div><div class="walk-wait">正在点灯……</div><canvas class="walk-mini" width="240" height="170"></canvas><div class="walk-l walk-pl"></div><div class="walk-joy"><i></i></div>';
+    el.innerHTML = '<div class="walk-c"></div><div class="walk-l"></div><div class="walk-top"><button class="pill" data-w="back">全图</button><div class="walk-t"><b></b><small></small></div><div class="walk-i"></div><button class="pill walk-q" data-w="s">声音</button><button class="pill walk-q" data-w="q">画质</button></div><div class="walk-tip">' + (matchMedia('(pointer: coarse)').matches ? '左下摇杆走动 · 拖动环视 · 点地面走过去' : 'WASD / 方向键走动 · 拖动环视 · 点地面走过去') + '</div><div class="walk-wait">正在点灯……</div><canvas class="walk-mini" width="240" height="170"></canvas><div class="walk-l walk-pl"></div><div class="walk-joy"><i></i></div>';
     const cbox = el.querySelector('.walk-c'), lbox = el.querySelector('.walk-l'), wait = el.querySelector('.walk-wait');
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     LOOK.renderer(renderer, 1.1); renderer.shadowMap.autoUpdate = false;
@@ -2153,7 +2153,7 @@ const V3 = {};
     function labels() {
       if (!lbl._loc || lbl._loc !== loc + vi) {
         lbox.innerHTML = ''; lbl = [];
-        (SP[loc] || []).forEach(sp => { const d = document.createElement('button'); d.className = 'walk-spot'; d.innerHTML = `<i></i><span>${sp.n}</span>`; d.onclick = e => { e.stopPropagation(); self.onSpot && self.onSpot(loc, sp); }; lbox.appendChild(d); lbl.push({ d, at: KP(sp.at), sp, k: 'sp' }); });
+        (SP[loc] || []).forEach(sp => { const d = document.createElement('button'); d.className = 'walk-spot'; d.innerHTML = `<i></i><span>${sp.n}</span>`; d.onclick = e => { e.stopPropagation(); SND.book(); self.onSpot && self.onSpot(loc, sp); }; lbox.appendChild(d); lbl.push({ d, at: KP(sp.at), sp, k: 'sp' }); });
         doorsHere().forEach(o => { const d = document.createElement('button'); d.className = 'walk-go door'; d.innerHTML = `<span>${o.n} ›</span>`; d.onclick = e => { e.stopPropagation(); moveTo(o.to, o.vi); }; lbox.appendChild(d); lbl.push({ d, at: KP(o.at), k: 'door' }); });
         lbl._loc = loc + vi;
       }
@@ -2236,7 +2236,7 @@ const V3 = {};
       return true;   // 走出了所有房间、院子的范围
     }
     function roomAt(x, z) { const px = x / K, pz = z / K, R = HOT[floor] || []; for (let i = 0; i < R.length; i++) { const b = R[i].box; if (b && px >= b[0] && px < b[2] && pz >= b[1] && pz < b[3]) return R[i].loc; } return null; }
-    function updRoom() { const l = roomAt(pos.x, pos.z); if (l && l !== loc && VP[l]) { loc = l; vps = VP[l]; vi = -1; lbl._loc = null; el.querySelector('.walk-t b').textContent = rname(l); self.onRoom && self.onRoom(l); } }
+    function updRoom() { const l = roomAt(pos.x, pos.z); if (l && l !== loc && VP[l]) { if (loc) SND.door(); loc = l; vps = VP[l]; vi = -1; lbl._loc = null; el.querySelector('.walk-t b').textContent = rname(l); self.onRoom && self.onRoom(l); } }
     let lift = 0;
     function switchFloor(f) { floor = f; if (!COL[f]) COL[f] = buildCol(cur, f); floorLights(cur, f); ground = f === 2 ? F2 : groundAt(pos.x, pos.z, true); renderer.shadowMap.needsUpdate = true; sentKey = ''; updRoom(); need = true; }
     function toFloor(f, px, pz, y) {      // 走楼梯换层
@@ -2282,7 +2282,8 @@ const V3 = {};
       const md = Math.hypot(pos.x - ox, pos.z - oz);
       if (target && md < sp * 0.2) { target = null; mark.visible = false; }       // 被挡住就停下
       ground = groundAt(pos.x, pos.z);
-      bob += md * 1.1; lift += (ground - lift) * Math.min(1, dt * 12); pos.y = lift + EYE + Math.sin(bob) * 0.06;
+      { const b0 = Math.floor(bob / Math.PI); bob += md * 1.1; if (Math.floor(bob / Math.PI) !== b0) SND.myStep(ground > 0.4 && ground < F2 - 0.4); }   // 每迈一步响一声，楼梯上带吱呀
+      lift += (ground - lift) * Math.min(1, dt * 12); pos.y = lift + EYE + Math.sin(bob) * 0.06;
       if (floor === 1 && ground >= F2 - 0.3) switchFloor(2);                                                   // 楼梯走到顶：上了二楼
       else if (floor === 2) { const px = pos.x / K, pz = pos.z / K; if (px > HOLE[0] + 0.2 && px < HOLE[2] - 0.2 && pz > HOLE[1] + 0.2 && pz < HOLE[3] - 0.1) switchFloor(1); }   // 二楼走进楼梯口：往下走
       updRoom(); return true;
@@ -2316,14 +2317,58 @@ const V3 = {};
       p.tx = d.x; p.tz = d.z; p.tg = typeof d.g === 'number' ? d.g : (f === 2 ? F2 : 0); p.tyaw = d.yaw || 0; p.lab.textContent = d.name || id; placePeer(p); need = true;
     };
     self.peerGone = id => { const p = PEERS.get(id); if (!p) return; if (p.g && p.g.parent) p.g.parent.remove(p.g); p.lab.remove(); PEERS.delete(id); need = true; };
+    /* ---------- 声音：雨、虫鸣随室内外变化；座钟靠近才响；脚步（他人脚步有上限）；开门、翻看线索 ---------- */
+    const SND = (() => {
+      let ctx = null, master = null, on = true, ready = false; const B = {};
+      try { on = localStorage.getItem('hc_snd') !== '0'; } catch (e) {}
+      const NAMES = ['rain', 'crickets', 'clock', 'step0', 'step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7', 'creak1', 'creak2', 'creak3', 'door', 'book'];
+      const OUT = { '后院': 1, '前院': 1, '老号（公馆后门外三十步）': 1, '露台': 1, '后廊': 0.6 };
+      const CLOCKS = [[1, 79.5, 87.6], [2, 98.2, 85.5]];
+      let rain, crk, clk, rainF, out = 0, lastDoor = 0, lastBook = 0; const recent = [];
+      function loop(name, vol) { const g = ctx.createGain(); g.gain.value = vol; const src = ctx.createBufferSource(); src.buffer = B[name]; src.loop = true; src.start(0, Math.random() * B[name].duration); return { g, src }; }
+      function start() {
+        rain = loop('rain', 0); rainF = ctx.createBiquadFilter(); rainF.type = 'lowpass'; rainF.frequency.value = 900; rain.src.connect(rainF).connect(rain.g).connect(master);
+        crk = loop('crickets', 0); crk.src.connect(crk.g).connect(master);
+        clk = loop('clock', 0); clk.src.connect(clk.g).connect(master); ready = true;
+      }
+      function init() {
+        if (ctx) { if (ctx.state !== 'running') ctx.resume(); return; }
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; ctx = new AC(); master = ctx.createGain(); master.gain.value = on ? 1 : 0; master.connect(ctx.destination);
+        Promise.all(NAMES.map(n => fetch('3d/audio/' + n + '.mp3?v=1').then(r => r.arrayBuffer()).then(a => new Promise((res, rej) => ctx.decodeAudioData(a, res, rej))).then(b => { B[n] = b; })))
+          .then(start).catch(e => console.warn('sound', e));
+      }
+      function one(name, vol, rate = 1) { if (!ready || !B[name] || vol < 0.01) return; const g = ctx.createGain(); g.gain.value = vol; const src = ctx.createBufferSource(); src.buffer = B[name]; src.playbackRate.value = rate; src.connect(g).connect(master); src.start(); }
+      const stepName = () => 'step' + Math.floor(Math.random() * 8);
+      return {
+        init, get on() { return on; },
+        toggle() { on = !on; try { localStorage.setItem('hc_snd', on ? '1' : '0'); } catch (e) {} if (master) master.gain.value = on ? 1 : 0; init(); return on; },
+        tick(dt) {
+          if (!ready) return; const t = 1 - Math.exp(-dt * 2), tgt = OUT[loc] || 0; out += (tgt - out) * t;
+          rain.g.gain.value = 0.12 + 0.38 * out; rainF.frequency.value = 700 + 15000 * out * out;   // 屋里只听见闷闷的雨声
+          crk.g.gain.value = 0.02 + 0.3 * out;
+          let cv = 0; for (const [f, x, z] of CLOCKS) { if (f !== floor) continue; const d = Math.hypot(pos.x - x * K, pos.z - z * K); cv = Math.max(cv, Math.max(0, 1 - d / 13) ** 2 * 0.7); }   // 只有走近座钟才听得见
+          clk.g.gain.value = cv;
+        },
+        myStep(stair) { one(stepName(), (OUT[loc] ? 0.32 : 0.42), 0.9 + Math.random() * 0.2); if (stair && Math.random() < 0.45) one('creak' + (1 + Math.floor(Math.random() * 3)), 0.25); },
+        peerStep(d) {   // 别人的脚步：只听 18 米内，越远越轻；同一时间最多 3 个，0.3 秒内最多 4 声
+          if (!ready || d > 18) return; const now = performance.now(); while (recent.length && now - recent[0] > 300) recent.shift();
+          if (recent.length >= 4) return; recent.push(now); one(stepName(), 0.3 * (1 - d / 18) ** 1.5, 0.9 + Math.random() * 0.2); },
+        door() { const now = performance.now(); if (now - lastDoor < 4000) return; lastDoor = now; one('door', 0.28); },
+        book() { const now = performance.now(); if (now - lastBook < 600) return; lastBook = now; one('book', 0.5); },
+      };
+    })();
+    ['pointerdown', 'keydown', 'touchstart'].forEach(ev => el.addEventListener(ev, () => SND.init(), { passive: true }));
+    const nearPeers = new Set();
     function stepPeers(dt) {
       let any = false; const k = 1 - Math.exp(-dt * 7);
+      nearPeers.clear(); [...PEERS.values()].filter(p => p.g && p.f === floor).sort((a, b) => Math.hypot(a.x * K - pos.x, a.z * K - pos.z) - Math.hypot(b.x * K - pos.x, b.z * K - pos.z)).slice(0, 3).forEach(p => nearPeers.add(p));   // 只有最近的三个人发出脚步声
       PEERS.forEach(p => {
         if (!p.g) return;
         const dx = p.tx - p.x, dz = p.tz - p.z, d = Math.hypot(dx, dz); p.x += dx * k; p.z += dz * k;
         let dy = p.tyaw - p.yaw; while (dy > Math.PI) dy -= 2 * Math.PI; while (dy < -Math.PI) dy += 2 * Math.PI; p.yaw += dy * k;
         p.gy = p.gy === undefined ? p.tg : p.gy + ((p.tg ?? 0) - p.gy) * k; p.g.position.set(p.x * K, p.gy ?? (p.f === 2 ? F2 : 0), p.z * K); p.g.rotation.y = p.yaw - Math.PI / 2;
         const walking = d > 0.05, A = p.g.userData.anim;
+        if (walking && p.f === floor) { p.stp = (p.stp || 0) + d * k; if (p.stp > 3.2) { p.stp = 0; const dd = Math.hypot(p.x * K - pos.x, p.z * K - pos.z); if (nearPeers.has(p)) SND.peerStep(dd); } }
         if (A) {
           if (walking !== A.walking && A.walk && A.idle) { A.walking = walking; const from = walking ? A.idle : A.walk, to = walking ? A.walk : A.idle; to.reset(); to.setEffectiveWeight(1); to.play(); from.crossFadeTo(to, 0.25, false); if (A.walk) A.walk.timeScale = 1.5; }
           A.acc = (A.acc || 0) + dt; const near = p.f === floor && Math.hypot(p.x * K - pos.x, p.z * K - pos.z) < (LOOK.mobile ? 40 : 70);
@@ -2354,7 +2399,7 @@ const V3 = {};
       if (!el.isConnected) { raf = 0; return; }
       raf = requestAnimationFrame(frame);
       { const t = performance.now(), dt = Math.min(0.05, (t - (lastT || t)) / 1000); lastT = t;
-        if (walkStep(dt)) need = true; if (stepPeers(dt)) need = true; sendPos(t); }
+        if (walkStep(dt)) need = true; if (stepPeers(dt)) need = true; sendPos(t); SND.tick(dt); }
 
       if (tw) { const t = Math.min(1, (performance.now() - tw.t0) / 700), e = t * t * (3 - 2 * t); pos.lerpVectors(tw.a, tw.b, e); yaw = tw.y0 + (tw.y1 - tw.y0) * e; if (t >= 1) tw = null; need = true; }
       const now = performance.now();
@@ -2399,6 +2444,7 @@ const V3 = {};
     self.cam = (p, y, pt, fov) => { pos.set(p[0] * K, p[1], p[2] * K); yaw = y; pitch = pt; if (fov) { cam.fov = fov; cam.updateProjectionMatrix(); } need = true; };
     el.querySelector('[data-w=back]').onclick = () => self.onBack && self.onBack();
     el.querySelector('[data-w=q]').onclick = () => setQ(QS[(QS.indexOf(QM) + 1) % QS.length]);
+    { const sb = el.querySelector('[data-w=s]'), lab = () => { sb.textContent = SND.on ? '声音 · 开' : '声音 · 关'; }; lab(); sb.onclick = () => { SND.toggle(); lab(); }; }
     new ResizeObserver(fit).observe(cbox);
     const cv = renderer.domElement; cv.style.touchAction = 'none';
     const ptr = new Map(); let pinch = null;
