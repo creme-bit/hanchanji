@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=30' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=31' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -783,7 +783,7 @@ const V3 = {};
       return g;
     };
     M.slumped = (p, x, z, ry = 0) => {
-      const g = M.group(p, x, 0, z, ry);
+      const g = M.group(p, x, 0, z, ry); g.userData.nomerge = 1;   // 模型异步载入：合批时别把还空着的组删掉
       if (!gltfLoader) gltfLoader = new THREE.GLTFLoader();
       gltfLoader.load('3d/models/male_base.glb', gl => {
         const m = gl.scene, bones = {}; let mesh = null;
@@ -1956,7 +1956,7 @@ const V3 = {};
       list.forEach(o => { if (o.parent) o.parent.remove(o); }); merged++; removed += list.length;
     });
     // 空掉的组也清掉，少遍历
-    const empties = []; s.traverse(o => { if ((o.isGroup || o.type === 'Object3D') && !o.children.length && !o.userData.glb && !o.userData.avatar && !o.userData.nomerge && o.parent) empties.push(o); }); empties.forEach(o => o.parent.remove(o));
+    // 空组不再清理：异步载入的模型（尸体、NPC 等）在合批时可能还没到
     s.userData.mergeStat = [merged, removed];
   }
   function floorLights(s, f) { const FL = s && s.userData.FL; if (!FL) return; FL[1].forEach(l => l.visible = f === 1); FL[2].forEach(l => l.visible = f === 2); }
@@ -2324,7 +2324,7 @@ const V3 = {};
       const NAMES = ['rain', 'crickets', 'clock', 'step0', 'step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7', 'creak1', 'creak2', 'creak3', 'door', 'book'];
       const OUT = { '后院': 1, '前院': 1, '老号（公馆后门外三十步）': 1, '露台': 1, '后廊': 0.6 };
       const CLOCKS = [[1, 79.5, 87.6], [2, 98.2, 85.5]];
-      let rain, crk, clk, rainF, out = 0, lastDoor = 0, lastBook = 0; const recent = [];
+      let rain, crk, clk, rainF, out = 0, cw = Math.random() * 6, lastDoor = 0, lastBook = 0; const recent = [];
       function loop(name, vol) { const g = ctx.createGain(); g.gain.value = vol; const src = ctx.createBufferSource(); src.buffer = B[name]; src.loop = true; src.start(0, Math.random() * B[name].duration); return { g, src }; }
       function start() {
         rain = loop('rain', 0); rainF = ctx.createBiquadFilter(); rainF.type = 'lowpass'; rainF.frequency.value = 900; rain.src.connect(rainF).connect(rain.g).connect(master);
@@ -2340,12 +2340,13 @@ const V3 = {};
       function one(name, vol, rate = 1) { if (!ready || !B[name] || vol < 0.01) return; const g = ctx.createGain(); g.gain.value = vol; const src = ctx.createBufferSource(); src.buffer = B[name]; src.playbackRate.value = rate; src.connect(g).connect(master); src.start(); }
       const stepName = () => 'step' + Math.floor(Math.random() * 8);
       return {
-        init, get on() { return on; },
+        init, get on() { return on; }, get out() { return out; },
         toggle() { on = !on; try { localStorage.setItem('hc_snd', on ? '1' : '0'); } catch (e) {} if (master) master.gain.value = on ? 1 : 0; init(); return on; },
         tick(dt) {
           if (!ready) return; const t = 1 - Math.exp(-dt * 2), tgt = OUT[loc] || 0; out += (tgt - out) * t;
           rain.g.gain.value = 0.12 + 0.38 * out; rainF.frequency.value = 700 + 15000 * out * out;   // 屋里只听见闷闷的雨声
-          crk.g.gain.value = 0.02 + 0.3 * out;
+          cw += dt * 0.13; const wave = 0.35 + 0.65 * Math.max(0, Math.sin(cw) * 0.6 + Math.sin(cw * 2.7 + 1.3) * 0.4);   // 虫鸣时有时无，不一直叫
+          crk.g.gain.value = (0.01 + 0.13 * out) * wave;
           let cv = 0; for (const [f, x, z] of CLOCKS) { if (f !== floor) continue; const d = Math.hypot(pos.x - x * K, pos.z - z * K); cv = Math.max(cv, Math.max(0, 1 - d / 13) ** 2 * 0.7); }   // 只有走近座钟才听得见
           clk.g.gain.value = cv;
         },
@@ -2358,6 +2359,24 @@ const V3 = {};
       };
     })();
     ['pointerdown', 'keydown', 'touchstart'].forEach(ev => el.addEventListener(ev, () => SND.init(), { passive: true }));
+    /* ---------- 下雨：雨丝只落在宅子外面（院子、露台、街上），屋里隔着窗也能看见 ---------- */
+    const RAIN = (() => {
+      const N = LOOK.mobile ? 2400 : 5200, R = 46, H = 46, pos3 = new Float32Array(N * 6), seed = new Float32Array(N * 2);
+      for (let i = 0; i < N; i++) { const x = (Math.random() * 2 - 1) * R, y = Math.random() * H, z = (Math.random() * 2 - 1) * R;
+        pos3.set([x, y, z, x, y, z], i * 6); seed[i * 2] = 0; seed[i * 2 + 1] = 1; }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos3, 3)); g.setAttribute('tip', new THREE.BufferAttribute(seed, 1));
+      const box = new THREE.Vector4(-0.5 * K, 29.5 * K, 150.5 * K, 90 * K);
+      const mat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { t: { value: 0 }, c: { value: new THREE.Vector3() }, box: { value: box }, R: { value: R }, H: { value: H } },
+        vertexShader: `attribute float tip; uniform float t, R, H; uniform vec3 c; varying vec2 wxz; varying float a;
+          void main() { vec3 p = position; float y = mod(p.y - t * 38.0, H); vec3 w = vec3(c.x + mod(p.x - c.x + R, 2.0 * R) - R, c.y - 14.0 + y, c.z + mod(p.z - c.z + R, 2.0 * R) - R);
+            w.y -= tip * 1.6; w.x += tip * 0.18; wxz = w.xz; a = tip; gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0); }`,
+        fragmentShader: `uniform vec4 box; varying vec2 wxz; varying float a;
+          void main() { if (wxz.x > box.x && wxz.x < box.z && wxz.y > box.y && wxz.y < box.w) discard; gl_FragColor = vec4(0.74, 0.8, 0.88, 0.16 + 0.3 * a); }` });
+      const m = new THREE.LineSegments(g, mat); m.frustumCulled = false; m.renderOrder = 6; m.userData.noscale = 1; m.userData.nocol = 1;
+      let last = 0;
+      return { tick(now, cur, anim) { if (!cur) return false; if (m.parent !== cur) cur.add(m); mat.uniforms.c.value.copy(cam.position); if (!anim) return false;
+        const gap = LOOK.mobile ? 50 : 33; if (now - last < gap) return false; last = now; mat.uniforms.t.value = now / 1000; return true; } };   // 雨丝约 20~30 帧，够看
+    })();
     const nearPeers = new Set();
     function stepPeers(dt) {
       let any = false; const k = 1 - Math.exp(-dt * 7);
@@ -2399,7 +2418,7 @@ const V3 = {};
       if (!el.isConnected) { raf = 0; return; }
       raf = requestAnimationFrame(frame);
       { const t = performance.now(), dt = Math.min(0.05, (t - (lastT || t)) / 1000); lastT = t;
-        if (walkStep(dt)) need = true; if (stepPeers(dt)) need = true; sendPos(t); SND.tick(dt); }
+        if (walkStep(dt)) need = true; if (stepPeers(dt)) need = true; sendPos(t); SND.tick(dt); if (RAIN.tick(t, cur, !NOANIM && (SND.out > 0.05 || !LOOK.mobile))) need = true; }   // 手机在屋里雨丝不动，省电
 
       if (tw) { const t = Math.min(1, (performance.now() - tw.t0) / 700), e = t * t * (3 - 2 * t); pos.lerpVectors(tw.a, tw.b, e); yaw = tw.y0 + (tw.y1 - tw.y0) * e; if (t >= 1) tw = null; need = true; }
       const now = performance.now();
