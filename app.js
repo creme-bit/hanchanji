@@ -32,7 +32,7 @@ function act3(){const r=role();for(const code of st.codes){const t=dec(r.a3,st.p
 /* 第一轮的卡：勘查阶段只显示自己找到的和主持人发的 */
 function visible(c){if(!card(c))return false;if(c.round!==1)return true;const sv=st.sv;if(!sv||sv.phase!==EXPLORE)return true;
  return st.found.includes(c.id)||(sv.r1rel||[]).includes(c.id)}
-let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),3200)}
+let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("on"),Math.max(3200,m.length*160))}
 const modal=$('modal'),mbody=$('mbody');
 function open(title,html){$('mtitle').textContent=title;mbody.innerHTML=html;modal.classList.add('on');mbody.scrollTop=0}
 $('mclose').onclick=()=>{modal.classList.remove('on');render()};
@@ -194,10 +194,18 @@ function sheet(html,cb){let el=$('sheet');if(!el){el=document.createElement('div
 let installEvt=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;const b=document.querySelector('[data-install]');if(b)b.style.display=''});
 const standalone=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone;
 const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-function installBtn(){if(standalone())return'';return`<button class="pill" data-install style="margin:14px auto 0;display:${installEvt||isIOS()?'block':'none'}">装到桌面，下次一点就开</button>`}
+function installBtn(){if(standalone())return'';return`<button class="pill" data-install style="margin:14px auto 0;display:block">装到桌面，下次一点就开</button>`}
 document.addEventListener('click',async e=>{if(!e.target.closest('[data-install]'))return;
   if(installEvt){installEvt.prompt();const r=await installEvt.userChoice;installEvt=null;if(r.outcome==='accepted')toast('已装到桌面');return}
-  if(isIOS())toast('点 Safari 底部的「分享」按钮，再选「添加到主屏幕」')});
+  const ua=navigator.userAgent;let m;
+  if(/MicroMessenger/i.test(ua))m='微信里装不了：点右上角「···」选「在浏览器打开」，再点这个按钮';
+  else if(isIOS())m='点 Safari 底部的「分享」按钮，再选「添加到主屏幕」';
+  else if(/Android/i.test(ua))m='点浏览器右上角菜单，选「添加到主屏幕」或「安装应用」';
+  else if(/Edg\//.test(ua))m='点地址栏右边的「应用可用」图标，或菜单「应用」→「将此站点作为应用安装」';
+  else if(/Chrome\//.test(ua))m='点地址栏右边的安装图标（电脑加箭头），或菜单「投放、保存和分享」→「将页面作为应用安装」';
+  else if(/Safari\//.test(ua))m='在 Safari 菜单栏选「文件」→「添加到程序坞」';
+  else m='在浏览器菜单里找「安装应用」或「添加到主屏幕」';
+  toast(m)});
 function home(){useStage('home');app.innerHTML=`<div class="hero"><div><div class="title">寒蟬記</div><div class="seal">寒<br>蝉</div>
 <p class="sub">民国二十三年 · 腊月廿三 · 青浦沈公馆</p>
 <div class="wrap" style="max-width:420px;margin-top:28px">

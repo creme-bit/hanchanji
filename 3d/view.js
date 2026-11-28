@@ -3,7 +3,7 @@ const V3 = {};
 (function () {
   let loading = null;
   function load(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=35' : '')); })());
+  V3.ready = () => loading || (loading = (async () => { for (const f of ['three.min.js', 'gltf.min.js', 'look.js', 'textures.js', 'models.js', 'scene.js', 'nodes.js', 'pano.js']) await load('3d/' + f + (/^(models|scene|textures|look|nodes|pano)/.test(f) ? '?v=37' : '')); })());
   V3.ok = () => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 
   /* ------------------------------------------------------------ 立体图 */
@@ -1961,6 +1961,14 @@ const V3 = {};
     // 空组不再清理：异步载入的模型（尸体、NPC 等）在合批时可能还没到
     s.userData.mergeStat = [merged, removed];
   }
+  // 只点亮离人最近的几盏屋灯：远处的灯照不到眼前，却要每个像素都算一遍。亮着的数量保持不变，着色器不用重编
+  function cullLights(s, f, x, z, N) { const FL = s && s.userData.FL; if (!FL) return;
+    (FL[f === 1 ? 2 : 1] || []).forEach(l => l.visible = false);
+    const L = FL[f] || []; L.forEach(l => { if (l.isSpotLight) l.visible = true; });   // 聚光灯照旧，只挑点光源
+    if (!L._d) L._d = L.filter(l => l.isPointLight).map(l => ({ l, real: l.intensity > 0 }));
+    const ws = new THREE.Vector3(); L._d.forEach(o => { o.l.getWorldPosition(ws); o.d = o.real ? Math.hypot(ws.x - x, ws.z - z) : 1e9; });
+    L._d.slice().sort((a, b) => a.d - b.d).forEach((o, i) => { o.l.visible = i < N; }); }
+  V3._cullLights = cullLights;
   function floorLights(s, f) { const FL = s && s.userData.FL; if (!FL) return; FL[1].forEach(l => l.visible = f === 1); FL[2].forEach(l => l.visible = f === 2); }
   // 机位：look = 初始朝向点
   const VP = {
@@ -2422,7 +2430,7 @@ const V3 = {};
       if (!el.isConnected) { raf = 0; return; }
       raf = requestAnimationFrame(frame);
       { const t = performance.now(), dt = Math.min(0.05, (t - (lastT || t)) / 1000); lastT = t;
-        if (walkStep(dt)) need = true; if (stepPeers(dt)) need = true; sendPos(t); SND.tick(dt); if (RAIN.tick(t, cur, !NOANIM && (SND.out > 0.05 || !LOOK.mobile))) need = true; }   // 手机在屋里雨丝不动，省电
+        if (walkStep(dt)) need = true; if (stepPeers(dt)) need = true; sendPos(t); SND.tick(dt); if (cur && t - (frame._lc || 0) > 300) { frame._lc = t; cullLights(cur, floor, pos.x, pos.z, LOOK.mobile ? 6 : 8); } if (RAIN.tick(t, cur, !NOANIM && (SND.out > 0.05 || !LOOK.mobile))) need = true; }   // 手机在屋里雨丝不动，省电
 
       if (tw) { const t = Math.min(1, (performance.now() - tw.t0) / 700), e = t * t * (3 - 2 * t); pos.lerpVectors(tw.a, tw.b, e); yaw = tw.y0 + (tw.y1 - tw.y0) * e; if (t >= 1) tw = null; need = true; }
       const now = performance.now();
