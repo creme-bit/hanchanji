@@ -190,12 +190,20 @@ function sheet(html,cb){let el=$('sheet');if(!el){el=document.createElement('div
  el.querySelectorAll('[data-sheet]').forEach(b=>b.onclick=()=>{el.classList.remove('on');try{MAP&&MAP.clear()}catch(e){}cb&&cb(b.dataset.sheet,el)})}
 
 /* ======================= 页面：首页 ======================= */
+// 装到桌面：安卓/电脑用浏览器自带的安装框；苹果手机给步骤提示；已经装好的不显示
+let installEvt=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;const b=document.querySelector('[data-install]');if(b)b.style.display=''});
+const standalone=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function installBtn(){if(standalone())return'';return`<button class="pill" data-install style="margin:14px auto 0;display:${installEvt||isIOS()?'block':'none'}">装到桌面，下次一点就开</button>`}
+document.addEventListener('click',async e=>{if(!e.target.closest('[data-install]'))return;
+  if(installEvt){installEvt.prompt();const r=await installEvt.userChoice;installEvt=null;if(r.outcome==='accepted')toast('已装到桌面');return}
+  if(isIOS())toast('点 Safari 底部的「分享」按钮，再选「添加到主屏幕」')});
 function home(){useStage('home');app.innerHTML=`<div class="hero"><div><div class="title">寒蟬記</div><div class="seal">寒<br>蝉</div>
 <p class="sub">民国二十三年 · 腊月廿三 · 青浦沈公馆</p>
 <div class="wrap" style="max-width:420px;margin-top:28px">
 <button class="btn glass" data-go="opening">开场<small>故事从这里开始</small></button>
 <button class="btn red" data-go="pick">我是玩家</button>
-<button class="btn glass" data-go="hostlogin" style="text-align:center">我是主持人</button></div></div></div>`}
+<button class="btn glass" data-go="hostlogin" style="text-align:center">我是主持人</button>${installBtn()}</div></div></div>`}
 function pick(){useStage('home');app.innerHTML=`<div class="top"><div class="who">选择你的角色<small>只选主持人发给你的那一个</small></div><button class="pill" data-go="home">返回</button></div>
 <div class="wrap">${D.roles.map(r=>`<button class="btn glass" data-role="${r.id}">${esc(r.name)}<small>${esc(r.sa)} · ${esc(r.ident)}</small></button>`).join('')}</div>`}
 function login(rid){useStage('home');const r=D.roles.find(x=>x.id===rid);app.innerHTML=`<div class="top"><div class="who">${esc(r.name)}<small>输入主持人私下给你的密码和房间号</small></div><button class="pill" data-go="pick">返回</button></div>
